@@ -1,0 +1,5 @@
+sceneSetups:
+- path: C:/Users/moonrjung/Dropbox/ACCExhibition/EternalRecurrenceBackup/20181224ThreeProjectorsBoidsAlbatrosTop2/assets/MainScene.unity
+  isLoaded: 1
+  isActive: 1
+  isSubScene: 0

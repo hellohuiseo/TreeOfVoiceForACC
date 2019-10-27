@@ -6,43 +6,36 @@
 //// 참조 사이트 : https://weathergadget.wordpress.com/2016/05/19/usi-spi-slave-communication/
 
 #define SS 10
-
 #define NUMPIXELS1 7 // Number of Pixies in the strip
 #define PIXIEPIN  6 // Pin number for SoftwareSerial output to the LED chain
+
 SoftwareSerial pixieSerial(-1, PIXIEPIN);
 Adafruit_Pixie strip = Adafruit_Pixie(NUMPIXELS1, &pixieSerial);
 
-//const int bufferSize = NUMPIXELS1 * 3 + 1; // 
-
 const int bufferSize = NUMPIXELS1 * 3; 
-
+byte showByte = 1; 
 byte buf[bufferSize];
 volatile byte m_pos = 0;
 volatile boolean m_process_it = false;
  
 void setup() {
-  //Serial.begin(9600);
-  // have to send on master in, *slave out*
-
+  Serial.begin(9600); // have to send on master in, *slave out*
   pixieSerial.begin(115200); // Pixie REQUIRES this baud rate
-  //strip.setBrightness(200);  // Adjust as necessary to avoid blinding
-
-
-  SPI.begin();                //PB2 - PB4 are converted to SS/, MOSI, MISO, SCK
+  SPI.begin(); //PB2 - PB4 are converted to SS/, MOSI, MISO, SCK
 
   pinMode(SS, INPUT);
-     // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
-
- 
-   // turn on SPI in slave mode
+  
+  // turn on SPI in slave mode
   SPCR |= bit(SPE);
-  //   SPCR |= _BV(SPE);
-
+  // SPI통신 레지스터 설정
+  //  SPCR |= _BV(SPE);
+    
   // get ready for an interrupt
   m_pos = 0;   // buffer empty
   m_process_it = false;
-    
+
+  //// 슬레이브로 동작하도록 설정
   SPCR &= ~_BV(MSTR);
 
   ////  인터럽트 발생을 허용
@@ -50,12 +43,8 @@ void setup() {
 
   // now turn on interrupts
   //SPI.attachInterrupt();
-
-  //
-  // now turn on interrupts
-//  SPI.attachInterrupt();
-  //SPI.setClockDivider(SPI_CLOCK_DIV16);
- //https://www.arduino.cc/en/Tutorial/SPITransaction
+  SPI.setClockDivider(SPI_CLOCK_DIV16);
+  //https://www.arduino.cc/en/Tutorial/SPITransaction
 
   pinMode(PIXIEPIN, OUTPUT);
 }
@@ -70,46 +59,36 @@ void setup() {
 // SPI interrupt routine
 ISR (SPI_STC_vect) {
   byte c = SPDR;  // grab byte from SPI Data Register
-
-  Serial.println( c );
-
-  if( m_pos < sizeof(buf))
-  {
-    buf[ m_pos++]=c;	
+  
+  if( c == 0 ){
+    showByte = 0;
+    Serial.println("show command");
+    }
+  else if( m_pos < sizeof(buf)){
+    buf[ m_pos++ ]=c;	
   }
-
-  if( m_pos ==  sizeof(buf) )
-
- // if ( c == (byte) 255 ) // If you want to use this, do it before
-  {
+  else if( m_pos ==  sizeof(buf) ){
     m_process_it = true;
-	Serial.println("show command");
   }
 }
  
-void loop() 
-{
-
+void loop() {
   if( m_process_it)
-  {
-   // SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // disable interrupt
-	// 
-
-    for(int i=0; i<NUMPIXELS1; i++) 
-	{ //NUMPIXELS
+  { 
+    //SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // disable interrupt
+    for(int i=0; i<NUMPIXELS1; i++) { //NUMPIXELS
       strip.setPixelColor(i, buf[i*3+0], buf[i*3+1], buf[i*3+2]);
       Serial.println(buf[i*3+0]);
-      Serial.println(buf[i*3+1]);
-      Serial.println(buf[i*3+2]);
+      Serial.print(buf[i*3+1]);
+      Serial.print(buf[i*3+2]);
      }
-
+  }
+  if(showByte == 0){
     strip.show(); // show command has been  recieved
-
+    showByte = 1;
     m_pos = 0;
     m_process_it = false;
-
+    }
+  delay(10);
 	//SPI.endTransaction();// // enable interrupt
-
-  }//  if (process_it) {
-  //vdelay(10);
 }

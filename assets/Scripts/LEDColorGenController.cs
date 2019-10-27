@@ -14,10 +14,7 @@ public class LEDColorGenController : MonoBehaviour
 
     public float innerCircleRadius = 1; // m
     public float outerCircleRadius = 2;
-
-
-
-
+         
     // Setup events for sending LED data to m_LEDMasterController
 
     public int m_totalNumOfLeds = 7 + 5 + 10 + 10;
@@ -25,12 +22,73 @@ public class LEDColorGenController : MonoBehaviour
     public delegate void LEDSenderHandler(byte[] LEDArray);
     public event LEDSenderHandler m_ledSenderHandler;
 
+
+    //SimpleBoidsTreeOfVoice _boids; // set in the inspector
+
+    protected const int BLOCK_SIZE = 1024; // The number of threads in a single thread group
+
+    protected const int MAX_SIZE_OF_BUFFER = 10000;
+
+    const float epsilon = 1e-2f;
+    const float M_PI = 3.1415926535897932384626433832795f;
+
+    float m_SceneStartTime; // = Time.time;
+    float m_SceneDuration = 390.0f; // 120 seconds
+
+    // 보이드의 수
+    public float m_BoidsNum;
+    
+    public struct BoidLEDData
+    {
+        // public Vector3  WallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
+
+        //public Vector3 EulerAngles; // the rotation of the boid reference frame
+        public Vector3 Position; //
+
+        public Vector4 Color;         // RGBA color
+        public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+                                // 0=> the core circular wall. 
+                                // 1 => the outer circular wall;
+    }
+
+    public struct BranchCylinder
+    {
+        // public Vector3  WallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
+
+        //public Vector3 EulerAngles; // the rotation of the boid reference frame
+        public Vector3 Position; // the position of the  cylinder origin in the boid reference frame        
+        public float Height;
+
+        public float Radius; // the radius of the cylinder
+        public Vector4 Color;         // RGBA color of the cylinder; This color is a weighted sum of the colors of the neighbor
+                                      // boids of the branch cylinder which is located at Position
+
+        public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+                                // 0=> the core circular wall. 
+                                // 1 => the outer circular wall;
+    }
+
+
+    // 컴퓨트 쉐이더
+    // Mention another Component instance.
+    [SerializeField] protected ComputeShader BoidLEDComputeShader;
+
+    //https://www.reddit.com/r/Unity3D/comments/7ppldz/physics_simulation_on_gpu_with_compute_shader_in/
+    // 보이드의 버퍼
+    public ComputeBuffer BoidBuffer { get; protected set; } 
+
+    public ComputeBuffer BoidLEDBuffer { get; protected set; } 
+
+    int BufferStartIndex, BufferEndIndex;
+
+    protected int KernelIdLEDColor;
+
+    // for debugging
+    BoidLEDData[] boidLEDArray;
+       
     byte[] m_LEDArray;
 
     public SimpleBoidsTreeOfVoice m_boidComponent; // specified in the inspector
-
-    // m_BoidsNum;
-    //      BoidData[] m_boidArray;
 
     // Add m_ledSenderHandler.Invoke( m_LEDArray ) when m_LEDArray is ready
 
@@ -53,14 +111,6 @@ public class LEDColorGenController : MonoBehaviour
     // public int BoidsNum = 256;
 
 
-
-
-    // 보이드의 수
-    int m_boidsNum;
-
-
-
-
     //m_neuroHeadSetController.onAverageSignalReceived += m_ledColorGenController.UpdateLEDResponseParameter;
     //m_irSensorMasterController.onAverageSignalReceived += m_ledColorGenController.UpdateColorBrightnessParameter;
 
@@ -74,7 +124,7 @@ public class LEDColorGenController : MonoBehaviour
 
         }
 
-        m_boidsNum = (int)m_boidComponent.m_BoidsNum;
+        m_BoidsNum = (int)m_boidComponent.m_BoidsNum;
 
         m_LEDArray = new byte[m_totalNumOfLeds * 3];
 
@@ -98,7 +148,7 @@ public class LEDColorGenController : MonoBehaviour
 
         for (int i = 0; i < m_totalNumOfLeds; i++)
         {
-            int k = Random.Range(0, m_boidsNum);
+            int k = Random.Range(0, (int) m_BoidsNum);
 
             m_LEDArray[i * 3] = (byte) (255 * m_boidComponent.m_boidArray[k].Color[0] ); // Vector4 Color
             m_LEDArray[i * 3 +1] = (byte) ( 255 * m_boidComponent.m_boidArray[k].Color[1] );
@@ -110,7 +160,7 @@ public class LEDColorGenController : MonoBehaviour
         m_ledSenderHandler.Invoke( m_LEDArray) ;
 
  
-        }
+     } // Update()
 
 
 

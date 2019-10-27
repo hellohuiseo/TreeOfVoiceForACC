@@ -299,4 +299,4 @@ public class DictManager: MonoBehaviour
         
     }
 
-} //public class SaveMyDic : BaseBehaviour
+} //public class
