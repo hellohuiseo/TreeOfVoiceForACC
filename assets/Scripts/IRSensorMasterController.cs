@@ -26,7 +26,7 @@ public class IRSensorMasterController : MonoBehaviour
     public string m_portName = "COM0"; // should be specified in the inspector
     SerialPort m_serialPort;
 
-        public byte[] m_IRDistanceBytes; // 4 bytes for two distances
+     public byte[] m_IRDistanceBytes; // 4 bytes for two distances
     float m_Delay;
     public const int m_IRDistanceBytesCount = 4; // 
 
@@ -57,7 +57,7 @@ public class IRSensorMasterController : MonoBehaviour
 
 
         //m_SerialPort.ReadTimeout = 50;
-        m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
+        //m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
                                           //  m_SerialPort1.WriteTimeout = 5000??
         m_serialPort.Open();
 
@@ -142,12 +142,7 @@ public class IRSensorMasterController : MonoBehaviour
         //    Console.WriteLine("Handled by anonymous method");
         //};
 
-
-
-
-
-
-
+                              
         //http://www.csharpstudy.com/CSharp/CSharp-event.aspx
         //https://www.codeproject.com/articles/20550/c-event-implementation-fundamentals-best-practices
 
@@ -255,42 +250,27 @@ public class IRSensorMasterController : MonoBehaviour
 
         // //public abstract int Read(byte[] buffer, int offset, int count);
 
-        int numBytesRead = 0;
+     
         int numBytesToRead = m_IRDistanceBytes.Length;
 
-        do
-        {
-            // Read may return anything from 0 to numBytesToRead.
-            int n = port.Read(m_IRDistanceBytes, numBytesRead, numBytesToRead);
-            numBytesRead += n;
-            numBytesToRead -= n;
-        } while (numBytesToRead > 0);
-
-        //port.Close();
+       
+        int numBytesRead   = port.Read(m_IRDistanceBytes, 0, numBytesToRead);
+        
 
         Console.WriteLine("number of bytes read: {0:d}", numBytesRead);
+        
+        int[] averageDistances = new int[m_IRDistanceBytesCount / 2]; // two bytes of m_IRDistances form a single distance
 
+        int intForLeftByte0 = m_IRDistanceBytes[0] << 8;
+        int intForRightByte0= m_IRDistanceBytes[1];
 
-        int[] averageDistances = new int[ m_IRDistanceBytesCount/2]; // two bytes of m_IRDistances form a single distance
+        averageDistances[0] = intForLeftByte0 | intForRightByte0;
 
+        int intForLeftByte1 = m_IRDistanceBytes[2] << 8;
+        int intForRightByte1 = m_IRDistanceBytes[3];
 
-        //m_byteArray[0] = (byte) (m_distances[0] >> 8);
-        //m_byteArray[1] = (byte) (m_distances[0] );
-        //m_byteArray[2] = (byte) (m_distances[1] >> 8);
-        //m_byteArray[3] = (byte) m_distances[1];
-
-
-
-        averageDistances[0] = 
-               (int) ( m_IRDistanceBytes[0] << 8) 
-              | (int) ( m_IRDistanceBytes[1] )
-            ;
-
-        averageDistances[1] =
-              (int)(m_IRDistanceBytes[2] << 8)
-             | (int)(m_IRDistanceBytes[3])
-           ;
-
+        averageDistances[1] = intForLeftByte1 | intForRightByte1;
+               
 
         onAverageSignalReceived.Invoke(averageDistances);
 

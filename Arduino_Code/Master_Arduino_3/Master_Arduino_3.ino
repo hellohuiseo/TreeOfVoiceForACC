@@ -29,10 +29,10 @@ int ss4 = 47;
 //int ss5 = 46; 
 
 // A total num of LED = 200; each slave processes 40 LEDs
-const int NumPixels1 = 7;
-const int NumPixles2 = 5;
-const int NumPixels3 = 10;
-const int NumPixels4 = 10;
+const int NumPixels1 = 40;
+const int NumPixles2 = 40;
+const int NumPixels3 = 40;
+const int NumPixels4 = 40;
 
 const int group1ByteSize = NumPixels1 * 3;
 const int group2ByteSize = NumPixles2 * 3;
@@ -40,10 +40,12 @@ const int group3ByteSize = NumPixels3 * 3;
 const int group4ByteSize = NumPixels4 * 3;
 //const int group5ByteSize = 40 * 3;
 
-const int totalByteSize = group1ByteSize + group2ByteSize + group3ByteSize + group4ByteSize; // 3 bytes for each of 200 LEDS
+const int m_totalByteSize = group1ByteSize + group2ByteSize + group3ByteSize + group4ByteSize; // 3 bytes for each of 200 LEDS
+
+int m_accumByteCount = 0;
 
 byte recieveBuffer[SERIAL_RX_BUFFER_SIZE]; 
-byte totalRecieveBuffer[totalByteSize]; 
+byte totalRecieveBuffer[m_totalByteSize]; 
 // SERIAL_RX_BUFFER_SIZE == 64; 
 // defined in C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\HardWareSerial.h
 
@@ -80,7 +82,21 @@ void setup (void) {
 	// which sets the SPI clock to one-quarter the frequency of the system clock (4 Mhz for the boards at 16 MHz).
   // SPI.setBitOrder(MSBFIRST);
 
-  Serial.begin(9600);
+  //Serial.begin(9600); // increase the serial comm speed; Unity Script also sets this speed
+   Serial.begin(115200); // To read bytes from the PC Unity Script
+
+   //Define another serial port: 
+//https://www.arduino.cc/reference/en/language/functions/communication/serial/
+//
+//https://m.blog.naver.com/PostView.nhn?blogId=darknisia&logNo=220569815020&proxyReferer=https%3A%2F%2Fwww.google.com%2F
+   // Mega has 4 Serial Ports: Serial, Serial1, Serial2, Serial3.
+   // Serial ports are defined by Pin 0 and 1; Serial1 is defined by pins 19(RX), 18(TX).
+   // Connect the first USB cable  to Pin 0 and 1 by the ordinary method; Connect the second USB cable from the second
+   // USB port in the PC to Pin 19 and 18; Also open another arduino IDE for the second serial port, Serial1.
+   // Use the first arduino IDE to upload the arduino code, and use the second arduino IDE to report messages.
+
+   Serial1.begin(115200); // Use Serial1 to send message to the Serial1 Monitor
+   
 }
  
 // https://arduino.stackexchange.com/questions/8457/serial-read-vs-serial-readbytes
@@ -111,7 +127,12 @@ void setup (void) {
 	//and I can predict the number of bytes I should receive back. –
 
 void loop (void) {	
-	//int countToRead = Serial.available(); // get the number of bytes already received in the receive buffer of the serial port 
+	//https://arduino.stackexchange.com/questions/1726/how-does-the-arduino-handle-serial-buffer-overflow
+
+	// If Serial.read() == -1, it means that head == tail, i.e. there are no bytes to read, that is, underflow happened
+
+	int availCount = Serial.available(); // get the number of bytes already received in the receive buffer of the serial port 
+	
 	//int HardwareSerial::available(void)
     //    {
     //    return ((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE;
@@ -122,21 +143,6 @@ void loop (void) {
 	//	return   ( (unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail) ) % SERIAL_RX_BUFFER_SIZE;
 	//}
 
-	//if (countToRead == 0)
-	//	return;
-
-	// Read countToRead  bytes from the serail port buffer to a buffer; terminated if the determined number (count) is read or it times out
-	// The timeout delay is set by Serial.setTimeout(); default to 1000 ms
-
-	//int readCount = Serial.readBytes(receiveBuffer, countToRead); // read count bytes from the tail of the buffer; head == tail when the buffer is empty or full
-
-	//int readCount = Serial.readBytes( recieveBuffer, totalByteSize);
-
-	// terminates if length characters have been read or timeout (see setTimeout)
-    // returns the number of characters placed in the buffer (0 means no valid data found)
-
-	// Unless the timeout for reading bytes in the buffer does not happen,  readCount  equals to  totalByteSize
-
 	//https://www.nutsvolts.com/magazine/article/july2011_smileysworkshop; 
 	//UART uses a ring buffer where head index is incremented when a new byte is written into the buffer
 	//https://arduino.stackexchange.com/questions/11710/does-data-coming-in-on-arduino-serial-port-store-for-some-time
@@ -144,57 +150,91 @@ void loop (void) {
 	//is an old character dropped or is the next character dropped? – Kolban Jun 19 '15 at 12:55
 	//2. The next(incoming) character is dropped.– Majenko♦ Jun 19 '15 at 13:17
 	// SUM: Yes. The receive ring buffer is 64 bytes and will discard anything past that until the program reads them out of the buffer.
+
+
+	if ( availCount == 0)
+		return;
+
+	// Read countToRead  bytes from the serail port buffer to a buffer; terminated if the determined number (count) is read or it times out
+	// The timeout delay is set by Serial.setTimeout(); default to 1000 ms
+
+	// 
+	if (  (m_accumByteCount + availCount) < m_totalByteSize) {
+
+		int readCount = Serial.readBytes(totalRecieveBuffer, availCount); 
+		// read count bytes from the tail of the buffer; head == tail when the buffer is empty or full
+		
+		// readCount < countToRead  means that timeout has happened.  the 1 s of timeout seems enough to read that.
+		// It is assumed that there arises no timeout while trying to read availCount, because that amount of
+		// bytes is already in the input ring buffer.
+		
+
+		// report the read bytes to the serial monitor
+		//  size_t println(const char[]);
+		Serial1.println(" read bytes:" + availCount);
+		for (int i = 0; i < availCount; i++) {
+			Serial1.println( totalRecieveBuffer[m_accumByteCount + i] );
+		}
+
+		m_accumByteCount += availCount;
+
+		return;
+	}
+
+	if ((m_accumByteCount + availCount) >= m_totalByteSize) {
+
+		//If you read availCount, then the total number of bytes exceed m_totalByteSize.
+		// So  read less than availCount so that the accumulated bytes become  m_totalByteSize
+		// The size to read, countToRead, is determined so that:
+		//m_accumByteCount + countToRead =  m_totalByteSize
+		int countToRead = m_totalByteSize - m_accumByteCount;
+
+		int readCount = Serial.readBytes(totalRecieveBuffer, countToRead); // read count bytes from the tail of the buffer; head == tail when the buffer is empty or full
+
+		// readCount < countToRead  means that timeout has happened.  the 1 s of timeout seems enough. So it is assumed that
+		// timeout does not occur:
 	
-	// check if the totalBytesSize has been read; that is check if time out occurred. If so, continue to read until the totalBytesSize
-	// has been read.
+      
 
-	//while ( readCount <  totalByteSize) 
-	//{ 
-	//  int newReadCount =  Serial.readBytes( &recieveBuffer[readCount], totalByteSize - readCount);
-	//  readCount += newReadCount; 
-	//}
+		Serial1.println(" read bytes:" + countToRead);
+		for (int i = 0; i < countToRead; i++) {
+			Serial1.println(totalRecieveBuffer[m_accumByteCount + i]);
+		}
 
-	//m_currentSize += readCount;
+		// Now that m_totalByteSize of bytes are read, set the accumulation byte size to zero for the next LED array 
+		m_accumByteCount = 0;
+	}
 
-	//for (i=0; i < readCount; i++) {
+	// now m_tatalByteSize are read => send the byte array to the slave arduino via SPI communications.
 	
-	// totalReceiveBuffer[m_currentIndex + i ]= ReceiveBuffer[i];
-
-	 //}
-
-	// m_currentIndex += readCount;
-
-
-	// If the arduino has read the total number of bytes for LED data from the serial port from PC , send them the master device via SPI 
-	//if ( m_currentSize == totalByteSize) {
-
-	
-		// SPISettings (which contains SPCR and SPSR)
-		 //SPISettings mySettting(speedMaximum, dataOrder, dataMode)
-  
-       //Parameters
-          //speedMaximum: The maximum speed of communication. For a SPI chip rated up to 20 MHz, use 20,000000. 
-		  //Arduino will automatically use the best speed that is equal to or less than the number you use with SPISettings. 
-
-       //dataOrder: MSBFIRST or LSBFIRST : Byte transfer from the most significant bit (MSB) Transfer?
-	
-       //dataMode : SPI_MODE0, SPI_MODE1, SPI_MODE2, or SPI_MODE3 
-
-		  //  call SPI.beginTransaction(spiSettings) 
-	
+		
 	// set random color values to totalRecieveBuffer
 	//https://gamedev.stackexchange.com/questions/32681/random-number-hlsl
 
   //for test LED
-	for (int i = 0; i < totalByteSize/3; i++) {
-		totalRecieveBuffer[3 * i] = (byte) random(10, 255); // from 10 to 254
-		totalRecieveBuffer[3 * i +1] = (byte)random(10, 255);
-		totalRecieveBuffer[3 * i +2] = (byte)random(10, 255);
+	//for (int i = 0; i < totalByteSize/3; i++) {
+	//	totalRecieveBuffer[3 * i] = (byte) random(10, 255); // from 10 to 254
+	//	totalRecieveBuffer[3 * i +1] = (byte)random(10, 255);
+	//	totalRecieveBuffer[3 * i +2] = (byte)random(10, 255);
 
-	}
+	//}
 	  
 	  SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0));
 	
+
+	  // SPISettings (which contains SPCR and SPSR)
+	   //SPISettings mySettting(speedMaximum, dataOrder, dataMode)
+
+	 //Parameters
+		//speedMaximum: The maximum speed of communication. For a SPI chip rated up to 20 MHz, use 20,000000. 
+		//Arduino will automatically use the best speed that is equal to or less than the number you use with SPISettings. 
+
+	 //dataOrder: MSBFIRST or LSBFIRST : Byte transfer from the most significant bit (MSB) Transfer?
+
+	 //dataMode : SPI_MODE0, SPI_MODE1, SPI_MODE2, or SPI_MODE3 
+
+		//  call SPI.beginTransaction(spiSettings) 
+
 
 			//https://www.dorkbotpdx.org/blog/paul/spi_transactions_in_arduino
 			//The clock speed you give to SPISettings is the maximum speed your SPI device can use, 
@@ -294,7 +334,7 @@ void loop (void) {
    //digitalWrite(ss5, HIGH);
    
    SPI.transfer(m_showByte);
-   Serial.println(m_showByte+"1"); //for test
+  // Serial.println(m_showByte+"1"); //for test
    digitalWrite(ss1, HIGH);
    SPI.endTransaction(); 
 
@@ -308,7 +348,7 @@ void loop (void) {
    //digitalWrite(ss5, HIGH);
    
    SPI.transfer( m_showByte);
-   Serial.println(m_showByte+"2"); //for test
+  // Serial.println(m_showByte+"2"); //for test
    digitalWrite(ss2, HIGH);
    SPI.endTransaction(); 
    
@@ -322,7 +362,7 @@ void loop (void) {
    //digitalWrite(ss5, HIGH);
    
    SPI.transfer( m_showByte);
-   Serial.println(m_showByte+"3"); //for test
+  // Serial.println(m_showByte+"3"); //for test
    digitalWrite(ss3, HIGH);
    SPI.endTransaction();
    
@@ -336,7 +376,7 @@ void loop (void) {
    //digitalWrite(ss5, HIGH);
    
    SPI.transfer( m_showByte );
-   Serial.println(m_showByte+"4"); //for test
+ //  Serial.println(m_showByte+"4"); //for test
    digitalWrite(ss4, HIGH);
    SPI.endTransaction();
 	
@@ -356,16 +396,9 @@ void loop (void) {
 
 	  delay (10); // delay between LED activation; at least 1 ms
 
-	  // write back the received bytes for testing
+	 // write back the received bytes for further testing:
 	// Serial.write(totalRecieveBuffer, totalByteSize);
 	  //If the transmit buffer is full then Serial.write() will block until there is enough space in the buffer. 
 	  //To avoid blocking calls to Serial.write(), you can first check the amount of free space in the transmit buffer using availableForWrite().
-	//}//if (m_currentSize == totalByteSize)
-
- //else {
- // // The buffer is not yet filled, so continue to read in the next iteration of loop()
- //}
-
-
- // delay (10);
+	
 }

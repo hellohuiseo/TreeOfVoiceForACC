@@ -57,10 +57,12 @@ public class SampleLEDColors : MonoBehaviour
     const float epsilon = 1e-2f;
     const float M_PI = 3.1415926535897932384626433832795f;
 
-    
+    [SerializeField] SimpleBoidsTreeOfVoice _boids; // _boids.BoidBuffer is a ComputeBuffer
+    //_instanceMaterial.SetBuffer("_BoidBuffer", _boids.BoidBuffer);
+
     // 컴퓨트 쉐이더
     // Mention another Component instance.
-    [SerializeField] protected ComputeShader BoidComputeShader;
+    [SerializeField] protected ComputeShader BoidLEDComputeShader;
 
     //https://www.reddit.com/r/Unity3D/comments/7ppldz/physics_simulation_on_gpu_with_compute_shader_in/
     // 보이드의 버퍼
@@ -137,13 +139,14 @@ public class SampleLEDColors : MonoBehaviour
      
 
 
-        BoidComputeShader.SetInt("_BoidsNum", (int)m_BoidsNum);
-       
-        //BoidComputeShader.SetFloat("_Mass", _mass
+        BoidLEDComputeShader.SetInt("_BoidsNum", (int)m_BoidsNum);
+        BoidLEDComputeShader.SetBuffer(KernelIdLED, "_BoidBuffer", _boids.BoidBuffer);
+
+     
 
 
-    
-      
+
+
     } //nitializeValues()
 
 
@@ -180,9 +183,9 @@ public class SampleLEDColors : MonoBehaviour
         //Also by checking the decompiled file of Vector3 on github, I confirmed that Vector3 indeed only consists of 3 floats
 
 
-        BoidBuffer = new ComputeBuffer(MAX_SIZE_OF_BUFFER, Marshal.SizeOf(typeof(BoidData)));
+       // BoidBuffer = new ComputeBuffer(MAX_SIZE_OF_BUFFER, Marshal.SizeOf(typeof(BoidData)));
 
-        m_boidArray = new BoidData[MAX_SIZE_OF_BUFFER];
+       // m_boidArray = new BoidData[MAX_SIZE_OF_BUFFER];
        
 
 
@@ -205,155 +208,12 @@ public class SampleLEDColors : MonoBehaviour
         //
         
 
-        BoidComputeShader.SetBuffer(KernelIdLED, "_BoidBuffer", _boids.BoidBuffer);
+     
 
       
 
     } // InitializeBuffers()
 
-
-
-
-    protected void SetBoidArray(int startIndex, int numberOfElements)
-    {
-
-
-        Vector3 initPos, initScale;
-        float theta, phi, initSpeed, initRadiusX, initRadiusY, initRadiusZ;
-        Vector4 initColor;
-        Vector2 initSoundGrain;
-        int wallNo;
-
-        for (int i = startIndex; i < numberOfElements; i++)
-        {
-            // set the head direction of the boid
-
-            if (!Use3DMotion)
-            // use 2D boids
-            {
-
-                // use 2D direction vector
-
-                //  direction angle on xz plane
-                theta = Random.Range(0, M_PI);
-
-
-                m_boidArray[i].HeadDir = new Vector3(Mathf.Cos(theta), 0.0f, Mathf.Sin(theta));
-
-                //use spherical coordinates to represent a direction of the boid
-
-                //phi = Random.Range(0, 2 * M_PI);
-                // phi = 90
-
-
-                // boidArray[i].HeadDir = new Vector3(Mathf.Cos(theta), 0.0f, Mathf.Sin(theta));
-                // Sin(phi) = Sin(90) = 1: theta on xz plane, phi between y axis and the radius vector
-            }
-            else
-            {
-
-                //  direction angle on xz plane ; inclination
-                theta = Random.Range(0, M_PI);
-                phi = Random.Range(0, 2 * M_PI); // azimuth
-                m_boidArray[i].HeadDir = new Vector3(Mathf.Sin(phi) * Mathf.Cos(theta), Mathf.Cos(phi), Mathf.Sin(phi) * Mathf.Sin(theta));
-            } // 3D
-
-
-
-
-
-            initRadiusX = Random.Range(MinBoidRadius, MaxBoidRadius);
-            initRadiusY = Random.Range(MinBoidRadius, MaxBoidRadius);
-            initRadiusZ = Random.Range(MinBoidRadius, MaxBoidRadius);
-
-            initScale = new Vector3(initRadiusX, initRadiusY, initRadiusZ);
-
-            initSpeed = Random.Range(_minSpeed, _maxSpeed);
-
-            m_boidArray[i].Radius = initRadiusX;
-
-            m_boidArray[i].Scale = initScale;
-
-
-            m_boidArray[i].Speed = initSpeed;
-
-
-
-            wallNo = i % numOfWalls; // from 0 to 1
-                                     // the number of the wall on which the boid lie. 0=> the ground
-                                     // 1 => the ceiling, 2 => left wall, 3=> right wall. 4=> front   wall
-
-
-            m_boidArray[i].WallNo = wallNo;
-
-            // set the position of the boid either on the ceiling or the ground
-            if (wallNo == 0)
-            {  // the boid is on the ground. The y axis point upward; THe z axis points to the front, The x axis points to the right
-
-                // wallOrigin = new Vector3(0.0f, 0.0f, 0.0f);
-                //  initEulerAngles = new Vector3(0.0f, 0.0f, 0.0f); // the rotation frame of the boid = the unity global frame 
-                // boidArray[i].EulerAngles = initEulerAngles;
-                // boidArray[i].WallOrigin = wallOrigin;
-
-                // The local position of the boid  on the wall reference frame of the boid
-
-                if (!Use3DMotion)
-                {
-
-
-                    initPos = new Vector3(Random.Range(GroundMinCorner.x, GroundMaxCorner.x),
-                                           0.0f, Random.Range(GroundMinCorner.z, GroundMaxCorner.z));
-                }
-                else
-                {
-
-                    initPos = new Vector3(Random.Range(GroundMinCorner.x, GroundMaxCorner.x),
-                                          Random.Range(0f, GroundPlaneDepth), Random.Range(GroundMinCorner.z, GroundMaxCorner.z));
-                }
-
-                m_boidArray[i].Position = initPos; // the initial random position of the boid
-
-                // set the transform for the wall
-
-
-            }
-            if (wallNo == 1)
-            {  // the boid is on the ceiling  => The y axis of the boid looks down
-               // The z axis points to the back , the axis x points to the right
-
-                // wallOrigin = new Vector3(0.0f, CeilingMaxCorner.y, 0.0f
-
-
-                // Unity's documentation states that the rotation order is ZXY, 
-                // R = Ry * Rx * Rz, that is, Roll => Pitch => Yaw order; This order is also assumed in shader code
-
-                // initEulerAngles = new Vector3( M_PI, 0.0f, 0.0f); //  pitch  = 180: the x to the right, the z to the back, the y down
-
-
-                // The local position of the boid  on the wall reference frame
-
-                if (!Use3DMotion)
-                {
-                    initPos = new Vector3(Random.Range(CeilingMinCorner.x, CeilingMaxCorner.x),
-                                          0.0f,
-                                          Random.Range(CeilingMinCorner.z, CeilingMaxCorner.z));
-                }
-                else
-                {
-                    initPos = new Vector3(Random.Range(CeilingMinCorner.x, CeilingMaxCorner.x),
-                                           Random.Range(0f, CeilingPlaneDepth),
-                                           Random.Range(CeilingMinCorner.z, CeilingMaxCorner.z));
-                }
-
-                m_boidArray[i].Position = initPos; // the initial random position of the boid
-
-            } // if
-
-
-        } // for  (int i = startIndex; i < numberOfElements; i++)
-
-
-    } // SetBoidArray()
 
 
 

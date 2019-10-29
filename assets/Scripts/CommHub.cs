@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; // has InputField
@@ -69,28 +70,27 @@ using System.IO;
 
 public class CommHub : MonoBehaviour
 {
+       
+    public DisplayScriptTreeOfVoice m_displayController;
 
-    
+    public SimpleBoidsTreeOfVoice m_boidsController;
+
+    public BoidRendererTreeOfVoice m_boidsRenderer;
+
+
     public ActionPlanController m_actionPlanController;
-
-   // public SimpleBoidsTreeOfVoice m_boidsController;
-
-    ActionPlanUpdateController m_actionPlanUpdateController;
-
+    public ActionPlanUpdateController m_actionPlanUpdateController;
   
+    public ActionPlanFileManager  m_actionPlanFileManager;
 
-   // public BoidsRendererTreeOfVoice m_boidsRenderer;
-
-    DictManager m_dictManager;
-
-    LEDColorGenController m_ledColorGenController;
-
+    public LEDColorGenController m_ledColorGenController;
  
-    PointerEventsController m_pointerEventsController;
+    public PointerEventsController m_pointerEventsController;
 
-    IRSensorMasterController m_irSensorMasterController;
-    LEDMasterController m_ledMasterController;
-    NeuroHeadSetController m_neuroHeadSetController;
+    public IRSensorMasterController m_irSensorMasterController;
+    public LEDMasterController m_ledMasterController;
+    public NeuroHeadSetController m_neuroHeadSetController;
+
 
     Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
@@ -102,35 +102,17 @@ public class CommHub : MonoBehaviour
     public void Awake()
     {
 
-        //ActionPlanController m_actionPlanController;
-        //ActionPlanUpdateController m_actionPlanUpdateController;
+       
 
-        //SimpleBoidsTreeOfVoice m_boidsController;
-        //BoidsRendererTreeOfVoice m_boidsRenderer;
-
-        //DictManager m_dictManager;
-
-        //LEDColorGenController m_ledColorGenController;
-
-        //ButtonEventController m_buttonEventController;
-        //PointerEventsController m_pointerEventsController;
-
-        //IRSensorMasterController m_irSensorMasterController;
-        //LEDMasterController m_ledMasterController;
-        //NeuroHeadSetController m_neuroHeadSetController;
-
-
-        //m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
+        m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
         m_actionPlanUpdateController = gameObject.GetComponent<ActionPlanUpdateController>();
-        //m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
-       // m_boidsRenderer = gameObject.GetComponent<BoidsRendererTreeOfVoice>();
+        m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+       m_boidsRenderer = gameObject.GetComponent<BoidRendererTreeOfVoice>();
 
-        m_dictManager = gameObject.GetComponent<DictManager>();
+        m_actionPlanFileManager= gameObject.GetComponent<ActionPlanFileManager>();
         m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>(); // compute Shader use
 
         m_pointerEventsController = gameObject.GetComponent<PointerEventsController>();
-    
-
         // this  gets the reference  to the instance of  class PointerEventsController
         // The instance is automatically created (by new  PointerEventsController() ) when the component is added to the gameObject
         // The gameboject will has the reference to that instance.
@@ -170,7 +152,7 @@ public class CommHub : MonoBehaviour
         if ( m_actionPlanController == null)
         {
             Debug.LogError(" m_actionPlanController should be set before use");
-            Application.Quit();
+           // Application.Quit();
         }
 
         m_actionPlan = m_actionPlanController.m_actionPlan;
@@ -192,9 +174,9 @@ public class CommHub : MonoBehaviour
         //In Update call  m_boidsController.SampleColorsAtLEDPoints
         //In Update call ledMasterController.SendLEDData
         
-         m_actionPlanController.loadButton.onClick.AddListener(m_dictManager.LoadActionPlan ) ;
+         m_actionPlanController.loadButton.onClick.AddListener(m_actionPlanFileManager.LoadActionPlan ) ;
 
-         m_actionPlanController.saveButton.onClick.AddListener( m_dictManager.SaveActionPlan) ;
+         m_actionPlanController.saveButton.onClick.AddListener( m_actionPlanFileManager.SaveActionPlan) ;
 
 
         m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>();
@@ -203,7 +185,7 @@ public class CommHub : MonoBehaviour
         if (m_ledColorGenController == null)
         {
             Debug.LogError("The global Variable  m_ledColorGenController is not  defined");
-            Application.Quit();
+           // Application.Quit();
         }
 
         m_ledColorGenController.m_ledSenderHandler += m_ledMasterController.UpdateLEDArray;

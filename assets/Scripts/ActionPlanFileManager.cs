@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-//using System.Windows.Forms;
+using System.Windows.Forms;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System; // String class
 using System.Linq; // To use Dictionary.ElementAt(i)
 //using System.Xml.Serialization;
 //using System.Runtime.Serialization;
-//using System.Runtime.Serialization.Formatters.Binary; //BinaryFormatter Class 
+using System.Runtime.Serialization.Formatters.Binary; //BinaryFormatter Class 
 
 
 using System.Xml.Linq;
@@ -211,61 +211,63 @@ using System.Text;
 //}//   void Deserialize()
 
 
-public class DictManager: MonoBehaviour
+public class ActionPlanFileManager: MonoBehaviour
     
   
 {
-    
-    // Define delegate instances
-    //public event Action<PointerEventData> onScroll, onPointerEnter;
+    ActionPlanController m_actionPlanController; // the reference is obtained from ActionPLanController component attached to
+                                                 //                                             // CommHub GameObject.
 
-    //ActionPlanController m_actionPlanController; // the reference is obtained from ActionPLanController component attached to
-    //                                             // CommHub GameObject.
-    //public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+     // Define delegate instances
+    public event Action<PointerEventData>  onPointerEnter;
+
+  
+    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
     ////public Dictionary<string, List<int>> myDict = new Dictionary<string, List<int>>();
 
-    //public string fileName = "dict.bin";
+    public string fileName = "dict.bin";
 
     //string dictPath { get { return Application.dataPath + "/" + fileName; } }
 
     //string dictPath { get { return UnityEngine.Application.dataPath + "/" + fileName; } }
 
-     void Start()
+    void Start()
     {
         //// get it from ActionPLanController component attached to CommHub
-        //m_actionPlanController = this.gameObject.GetComponent<ActionPlanController>();
+        m_actionPlanController = this.gameObject.GetComponent<ActionPlanController>();
+        // this.gameObject is CommHub object to which ActionPlanFileManager component is attached
 
-        //if (m_actionPlanController == null)
-        //{
-        //    Debug.LogError("Add ActionPlanController component to CommHub gameObject");
-        //    UnityEngine.Application.Quit();
-         
-        //}
+        if (m_actionPlanController == null)
+        {
+            Debug.LogError("Add ActionPlanController component to CommHub gameObject");
+            UnityEngine.Application.Quit();
 
-        //m_actionPlan = m_actionPlanController.m_actionPlan;
+        }
+
+        m_actionPlan = m_actionPlanController.m_actionPlan;
     }
     public void SaveActionPlan() // zero argument EventHandler triggered by PointerClick event
     {
-       // _SaveActionPlan(m_actionPlan, fileName);
+       _SaveActionPlan(m_actionPlan, fileName);
 
     }
     public void LoadActionPlan() // Zero Argument Event Handler triggered by PointerClick event
     {
-       // _LoadActionPlan(m_actionPlan, fileName);
+        _LoadActionPlan(m_actionPlan, fileName);
     }
      void _SaveActionPlan(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> myDict, string fileName)
     {
-        //string dictPath = UnityEngine.Application.dataPath + "/" + fileName;
+        string dictPath = UnityEngine.Application.dataPath + "/" + fileName;
 
-        ////FileStream file = File.Create(dictPath);
+        //FileStream file = File.Create(dictPath);
 
-        //FileStream file  = new FileStream( dictPath, FileMode.OpenOrCreate , FileAccess.Write);
+        FileStream file = new FileStream(dictPath, FileMode.OpenOrCreate, FileAccess.Write);
 
-        //BinaryFormatter bf = new BinaryFormatter();
+        BinaryFormatter bf = new BinaryFormatter(); 
 
-        //bf.Serialize(file, myDict);
-        //file.Close(); ;
+        bf.Serialize(file, myDict);
+        file.Close(); ;
 
 
     }
@@ -275,32 +277,32 @@ public class DictManager: MonoBehaviour
     {
 
 
-        //// Open OpenDialog
-        //OpenFileDialog openDialog = new OpenFileDialog();
+        // Open OpenDialog
+        OpenFileDialog openDialog = new OpenFileDialog(); // c# pure
 
-        //openDialog.Filter = "ActionPlan(*.act)|*.act";
+        openDialog.Filter = "ActionPlan(*.act)|*.act";
 
-        //openDialog.InitialDirectory = Directory.GetCurrentDirectory();
-        //openDialog.Title = "Open Action Plan";
-        //if (openDialog.ShowDialog() != DialogResult.OK)
-        //    return;
+        openDialog.InitialDirectory = Directory.GetCurrentDirectory();
+        openDialog.Title = "Open Action Plan";
+        if (openDialog.ShowDialog() != DialogResult.OK)
+            return;
 
-        //// FileStream(SafeFileHandle handle, FileAccess access);
-        //FileStream file  = new FileStream(openDialog.FileName, FileMode.Open, FileAccess.Read);
+        // FileStream(SafeFileHandle handle, FileAccess access);
+        FileStream file = new FileStream(openDialog.FileName, FileMode.Open, FileAccess.Read);
 
-        ////https://m.blog.naver.com/PostView.nhn?blogId=y2kgr&logNo=80208479466&categoryNo=13&proxyReferer=&proxyReferer=https%3A%2F%2Fwww.google.com%2F
+        //https://m.blog.naver.com/PostView.nhn?blogId=y2kgr&logNo=80208479466&categoryNo=13&proxyReferer=&proxyReferer=https%3A%2F%2Fwww.google.com%2F
 
-        ////FileStream  fs = new FileStream(openDialog.FileName, FileMode.Open);
-        ////reader = new StreamReader( fs, mode)
+        //FileStream  fs = new FileStream(openDialog.FileName, FileMode.Open);
+        //reader = new StreamReader( fs, mode)
 
-        //// https://docs.microsoft.com/ko-kr/dotnet/framework/winforms/controls/how-to-open-files-using-the-openfiledialog-component
+        // https://docs.microsoft.com/ko-kr/dotnet/framework/winforms/controls/how-to-open-files-using-the-openfiledialog-component
 
-        //// using (var reader = new StreamReader( openDialog.FileName)  )
+        // using (var reader = new StreamReader( openDialog.FileName)  )
 
-        //BinaryFormatter bf = new BinaryFormatter();
-        //myDict = (Dictionary<string, List< SimpleBoidsTreeOfVoice.Action > >) bf.Deserialize(file);
-        //file.Close();   
-        
+        BinaryFormatter bf = new BinaryFormatter();
+        myDict = (Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>>)bf.Deserialize(file);
+        file.Close();
+
     }
 
 } //public class

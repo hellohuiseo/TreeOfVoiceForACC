@@ -15,7 +15,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
      // This will acess the Component directly rather than the gameobject itself.
 
 
-    [SerializeField]  SimpleBoidsTreeOfVoice _boids; // _boids.BoidBuffer is a ComputeBuffer
+    [SerializeField]  SimpleBoidsTreeOfVoice m_boids; // _boids.BoidBuffer is a ComputeBuffer
     [SerializeField] Material _instanceMaterial;
 
     // [SerializeField] protected Vector3 RoomMinCorner = new Vector3(-10f, 0f, -10f);
@@ -124,21 +124,19 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
     // Use this for initialization
     void Start () 
 	{
+        // get the reference to SimpleBoidsTreeOfVoice
 
-        if (_boids == null)
+        m_boids = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+
+        if (m_boids == null)
         {
-            Debug.LogError("_boids component is not set in the inspector");
-            EditorApplication.Exit(0);
-            //Application.Quit();
+            Debug.LogError("SimpleBoidsTreeOfVoice component should be attached to CommHub");
+            //EditorApplication.Exit(0);
+            Application.Quit();
             
         }
 
-        //BoidsNum = GetComponent<SimpleBoids>().BoidsNum;
-        //GroundMaxCorner = GetComponent<SimpleBoids>().GroundMaxCorner;
-        //GroundMinCorner = GetComponent<SimpleBoids>().GroundMinCorner;
-
-        //CeilingMaxCorner = GetComponent<SimpleBoids>().CeilingMaxCorner;
-        //CeilingMinCorner = GetComponent<SimpleBoids>().CeilingMinCorner;
+        
 
         // check if the global component object is defined
         if (_instanceMaterial == null)
@@ -148,11 +146,11 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 
         }
 
-        GroundMaxCorner = _boids.GroundMaxCorner;
-        GroundMinCorner = _boids.GroundMinCorner;
+        GroundMaxCorner = m_boids.GroundMaxCorner;
+        GroundMinCorner = m_boids.GroundMinCorner;
 
-        CeilingMaxCorner = _boids.CeilingMaxCorner;
-        CeilingMinCorner = _boids.CeilingMinCorner;
+        CeilingMaxCorner = m_boids.CeilingMaxCorner;
+        CeilingMinCorner = m_boids.CeilingMinCorner;
 
 
         //Screen.SetResolution( sum of width of all displays, height, false)
@@ -222,7 +220,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 
        // _instanceMaterial.SetFloat("Use3DBoids", Use3DBoids);
 
-        _instanceMaterial.SetBuffer("_BoidBuffer", _boids.BoidBuffer); // _boids.BoidBuffer is ceated in SimpleBoids.cs
+        _instanceMaterial.SetBuffer("_BoidBuffer", m_boids.BoidBuffer); // m_boids.BoidBuffer is ceated in SimpleBoids.cs
     } // Start()
 	
 	// Update is called once per frame
@@ -299,9 +297,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 
 
         // check if _boids.BoidBuffer is not null
-        if (_boids.BoidBuffer == null) return; // nothing to render; 
-
-        //  _instanceMaterial.SetBuffer("_BoidBuffer", _boids.BoidBuffer);
+        if (m_boids.BoidBuffer == null) return; // nothing to render; 
 
 
         // _boids.BoidBuffer.GetData(boidArray);
@@ -311,7 +307,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
         //Debug.Log(_boids.BoidsNum);
 
         _args[0] = numIndices;
-        _args[1] = (uint)_boids.m_BoidsNum;
+        _args[1] = (uint)m_boids.m_BoidsNum;
 
         _argsBuffer.SetData(_args);
 
@@ -321,7 +317,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 			_instanceMesh,
 			0,
 			_instanceMaterial,
-			new Bounds(_boids.RoomCenter, _boids.RoomSize), 
+			new Bounds(m_boids.RoomCenter, m_boids.RoomSize), 
 			_argsBuffer
 		);
 

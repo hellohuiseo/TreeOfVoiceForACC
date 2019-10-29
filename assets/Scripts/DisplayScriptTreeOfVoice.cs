@@ -76,7 +76,7 @@ public class DisplayScriptTreeOfVoice: MonoBehaviour
         Vector3 CeilingCenter = (CeilingMinCorner + CeilingMaxCorner) / 2f;
         //   for (int i = 0; i < Display.displays.Length; i++)
         // scan the active cameras:
-        foreach (Camera c in Camera.allCameras)
+        foreach (Camera c in Camera.allCameras) // UnityEngine.Class
         {
             Debug.Log("camera gameObj name=" + c.gameObject.name);
             Debug.Log("camera name=" + c.name);

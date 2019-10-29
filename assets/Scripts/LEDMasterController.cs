@@ -52,6 +52,7 @@ public class LEDMasterController : MonoBehaviour
         //This takes a second or so, and during that time any data that you send is lost.
         //https://forum.arduino.cc/index.php?topic=459847.0
 
+        //https://docs.microsoft.com/en-us/dotnet/api/system.io.ports.serialport.writetimeout?view=netframework-4.8
 
         // Set up the serial Port
 
@@ -59,7 +60,8 @@ public class LEDMasterController : MonoBehaviour
 
 
         //m_SerialPort.ReadTimeout = 50;
-        m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
+       // m_serialPort.ReadTimeout = 1000;  // sets the timeout value: 1000 ms  = sufficient for our purpose?
+                                          // InfiniteTimeout is the default.
                                           //  m_SerialPort1.WriteTimeout = 5000??
         m_serialPort.Open();
 
@@ -109,18 +111,30 @@ public class LEDMasterController : MonoBehaviour
         //m_Thread = null;
         //if(connected) { // create and start a thread for the action updateArduino
         m_Thread = new Thread(new ThreadStart(updateArduino)); // ThreadStart() is a delegate (pointer type)
-        m_Thread.Start();
+       // m_Thread.Start();
 
     }
 
 
     public void UpdateLEDArray( byte[] ledArray)
     {
-        m_LEDArray = ledArray;
-    }
+        // Send the new LED array only when the sending thread has finished sending the previous LEDArray
+        // THat is, only when m_Thread.IsAlive is false. Tit happends when the method of the thread returns;
+        // That is when the sending thread has sent all the LED array.
+
+        if (!m_Thread.IsAlive)
+        {
+            m_LEDArray = ledArray;
+            m_Thread.Start(); // use the new LED array for the new invocation of the sending thread
+        }
+        else
+        {
+            // The sending thread is still sending =>: The arrived LED array is discarded
+        }
+        
     void Update()
     {
-
+      
     }
 
 }//public class LEDMasterController 

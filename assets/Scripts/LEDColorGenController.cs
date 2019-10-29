@@ -2,32 +2,57 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Runtime.InteropServices;
 
 using Random = UnityEngine.Random;
 
 public class LEDColorGenController : MonoBehaviour
 {
+    public SimpleBoidsTreeOfVoice m_boids;
+    // 보이드의 수
+    public float m_BoidsNum;
+    public int m_totalNumOfLeds = 160;
+
+    
+    [SerializeField] protected ComputeShader BoidLEDComputeShader;
+
+    //https://www.reddit.com/r/Unity3D/comments/7ppldz/physics_simulation_on_gpu_with_compute_shader_in/
+  
+
+
+    protected   int m_kernelIDLED;
+    public ComputeBuffer m_BoidLEDBuffer { get; protected set; } // null reference
+
+
+    BoidLEDData[] m_boidLEDArray;
+
+    byte[] m_LEDArray;
+
+
+
+
     // Areas of LED lights and person
 
-    public float personDepth = 1; // 1m
-    public float personWidth = 0.5f; // m
+    public float m_personSpaceDepth = 1; // 1m
+    public float m_personSpaceWidth = 0.5f; // m
 
-    public float innerCircleRadius = 1; // m
-    public float outerCircleRadius = 2;
-         
-    // Setup events for sending LED data to m_LEDMasterController
+    public float m_innerCircleRadius = 1; // m
+    public float m_outerCircleRadius = 2;
 
-    public int m_totalNumOfLeds = 7 + 5 + 10 + 10;
+    public float m_outerCircleDepth = 0.5f; //mm
 
-    public delegate void LEDSenderHandler(byte[] LEDArray);
+    public float m_percentageOfInnerLEDs = 40;
+
+     // delegate signature (interface definition)
+
+    public delegate void LEDSenderHandler(byte[] m_LEDArray);
     public event LEDSenderHandler m_ledSenderHandler;
 
+    protected const int BLOCK_SIZE = 256; // The number of threads in a single thread group
 
-    //SimpleBoidsTreeOfVoice _boids; // set in the inspector
+    protected const int MAX_SIZE_OF_BUFFER = 1000;
 
-    protected const int BLOCK_SIZE = 1024; // The number of threads in a single thread group
-
-    protected const int MAX_SIZE_OF_BUFFER = 10000;
+    int m_threadGroupSize;
 
     const float epsilon = 1e-2f;
     const float M_PI = 3.1415926535897932384626433832795f;
@@ -35,8 +60,7 @@ public class LEDColorGenController : MonoBehaviour
     float m_SceneStartTime; // = Time.time;
     float m_SceneDuration = 390.0f; // 120 seconds
 
-    // 보이드의 수
-    public float m_BoidsNum;
+   
     
     public struct BoidLEDData
     {
@@ -69,29 +93,8 @@ public class LEDColorGenController : MonoBehaviour
     }
 
 
-    // 컴퓨트 쉐이더
-    // Mention another Component instance.
-    [SerializeField] protected ComputeShader BoidLEDComputeShader;
 
-    //https://www.reddit.com/r/Unity3D/comments/7ppldz/physics_simulation_on_gpu_with_compute_shader_in/
-    // 보이드의 버퍼
-    public ComputeBuffer BoidBuffer { get; protected set; } 
-
-    public ComputeBuffer BoidLEDBuffer { get; protected set; } 
-
-    int BufferStartIndex, BufferEndIndex;
-
-    protected int KernelIdLEDColor;
-
-    // for debugging
-    BoidLEDData[] boidLEDArray;
-       
-    byte[] m_LEDArray;
-
-    public SimpleBoidsTreeOfVoice m_boidComponent; // specified in the inspector
-
-    // Add m_ledSenderHandler.Invoke( m_LEDArray ) when m_LEDArray is ready
-
+   
     // ComputeBuffer: GPU data buffer, mostly for use with compute shaders.
     // you can create & fill them from script code, and use them in compute shaders or regular shaders.
 
@@ -117,18 +120,55 @@ public class LEDColorGenController : MonoBehaviour
     void Start()
     {
 
-        if (m_boidComponent == null)
+        //m_threadGroupSize = Mathf.CeilToInt(m_BoidsNum / (float)BLOCK_SIZE);
+
+        m_threadGroupSize = Mathf.CeilToInt(m_totalNumOfLeds / (float)BLOCK_SIZE);
+        
+        m_boids = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+
+        if (m_boids== null)
         {
-            Debug.LogError("_boids component is not set in the inspector");
-            Application.Quit();
+            Debug.LogError("impleBoidsTreeOfVoice component should be added to CommHub");
+           // Application.Quit();
 
         }
 
-        m_BoidsNum = (int)m_boidComponent.m_BoidsNum;
+        m_BoidsNum = (int)m_boids.m_BoidsNum;
 
         m_LEDArray = new byte[m_totalNumOfLeds * 3];
 
+        m_kernelIDLED  = BoidLEDComputeShader.FindKernel("SampleLEDColors");
 
+        //define BoidLED
+
+        m_BoidLEDBuffer = new ComputeBuffer(m_totalNumOfLeds, Marshal.SizeOf(typeof(BoidLEDData)) );
+
+        m_boidLEDArray = new BoidLEDData[m_totalNumOfLeds ];
+      
+
+
+        //
+        //For each kernel we are setting the buffers that are used by the kernel, so it would read and write to those buffers
+
+        // For the part of boidArray that is set by data are filled by null. 
+        // When the array boidArray is created each element is set by null.
+
+        m_BoidLEDBuffer.SetData(m_boidLEDArray); // buffer is R or RW
+      
+
+        BoidLEDComputeShader.SetBuffer( mKernelIdGround, "_BoidBuffer", BoidBuffer);
+        //BoidComputeShader.SetBuffer(KernelIdGround, "_BoidCountBuffer", BoidCountBuffer);
+        BoidComputeShader.SetBuffer(KernelIdCeiling, "_BoidBuffer", BoidBuffer);
+        //BoidComputeShader.SetBuffer(KernelIdCeiling, "_BoidCountBuffer", BoidCountBuffer);
+
+
+        BoidComputeShader.SetBuffer(KernelIdCountBoids, "_BoidCountBuffer", BoidCountBuffer);
+        BoidComputeShader.SetBuffer(KernelIdCountBoids, "_BoidBuffer", BoidBuffer);
+
+
+
+        InitializeValues();
+        InitializeBuffers();
     }
 
 
@@ -142,20 +182,22 @@ public class LEDColorGenController : MonoBehaviour
 
     void Update()
     {
-      
-    
-    //public static float/iny Range(float min, float max);
+        // Get the current values of the boids from the boid computeShader
+        m_boids.BoidBuffer.GetData(m_boids.m_boidArray);
+
+        //public static float/iny Range(float min, float max);
 
         for (int i = 0; i < m_totalNumOfLeds; i++)
         {
             int k = Random.Range(0, (int) m_BoidsNum);
-
-            m_LEDArray[i * 3] = (byte) (255 * m_boidComponent.m_boidArray[k].Color[0] ); // Vector4 Color
-            m_LEDArray[i * 3 +1] = (byte) ( 255 * m_boidComponent.m_boidArray[k].Color[1] );
-            m_LEDArray[i * 3 +2] = (byte) (255 *  m_boidComponent.m_boidArray[k].Color[2] );
+            //_boids.BoidBuffer
+            m_LEDArray[i * 3] = (byte) (255 * m_boids.m_boidArray[k].Color[0] ); // Vector4 Color
+            m_LEDArray[i * 3 +1] = (byte) ( 255 * m_boids.m_boidArray[k].Color[1] );
+            m_LEDArray[i * 3 +2] = (byte) (255 *  m_boids.m_boidArray[k].Color[2] );
 
 
         }
+        //m_ledSenderHandler.Invoke( m_LEDArray ) when m_LEDArray is ready
 
         m_ledSenderHandler.Invoke( m_LEDArray) ;
 
