@@ -1,4 +1,5 @@
 #include <SPI.h>
+
 #include "SoftwareSerial.h"
 #include "Adafruit_Pixie.h"
 
@@ -6,21 +7,24 @@
 //// 참조 사이트 : https://weathergadget.wordpress.com/2016/05/19/usi-spi-slave-communication/
 
 #define SS 10
-#define NUMPIXELS1 7 // Number of Pixies in the strip
+#define NUMPIXELS1 40 // Number of Pixies in the strip
 #define PIXIEPIN  6 // Pin number for SoftwareSerial output to the LED chain
 
 SoftwareSerial pixieSerial(-1, PIXIEPIN);
 Adafruit_Pixie strip = Adafruit_Pixie(NUMPIXELS1, &pixieSerial);
 
 const int bufferSize = NUMPIXELS1 * 3; 
-byte showByte = 1; 
+byte showByte = 0; 
 byte buf[bufferSize];
 volatile byte m_pos = 0;
 volatile boolean m_process_it = false;
  
 void setup() {
-  Serial.begin(9600); // have to send on master in, *slave out*
-  pixieSerial.begin(115200); // Pixie REQUIRES this baud rate
+  Serial.begin(115200); // have to send on master in, *slave out*
+
+  Serial1.begin(115200); 
+
+  //pixieSerial.begin(115200); // Pixie REQUIRES this baud rate
   SPI.begin(); //PB2 - PB4 are converted to SS/, MOSI, MISO, SCK
 
   pinMode(SS, INPUT);
@@ -62,33 +66,32 @@ ISR (SPI_STC_vect) {
   
   if( c == 0 ){
     showByte = 0;
-    Serial.println("show command");
+	m_process_it = true;
+    Serial1.println("show command");
     }
   else if( m_pos < sizeof(buf)){
     buf[ m_pos++ ]=c;	
   }
-  else if( m_pos ==  sizeof(buf) ){
-    m_process_it = true;
-  }
-}
+ 
+}//ISR (SPI_STC_vect) 
  
 void loop() {
-  if( m_process_it)
-  { 
-    //SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // disable interrupt
-    for(int i=0; i<NUMPIXELS1; i++) { //NUMPIXELS
-      strip.setPixelColor(i, buf[i*3+0], buf[i*3+1], buf[i*3+2]);
-      Serial.println(buf[i*3+0]);
-      Serial.print(buf[i*3+1]);
-      Serial.print(buf[i*3+2]);
-     }
-  }
-  if(showByte == 0){
-    strip.show(); // show command has been  recieved
-    showByte = 1;
-    m_pos = 0;
-    m_process_it = false;
-    }
-  delay(10);
-	//SPI.endTransaction();// // enable interrupt
+
+	if (m_process_it)
+	{
+		//SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // disable interrupt
+		for (int i = 0; i < NUMPIXELS1; i++)
+		{
+			strip.setPixelColor(i, buf[i * 3 + 0], buf[i * 3 + 1], buf[i * 3 + 2]);
+			Serial1.println(buf[i * 3 + 0]);
+			Serial1.print(buf[i * 3 + 1]);
+			Serial1.print(buf[i * 3 + 2]);
+		}
+
+		strip.show(); // show command has been  recieved
+		m_pos = 0;
+		m_process_it = false;
+
+		//SPI.endTransaction();// // enable interrupt
+	}
 }

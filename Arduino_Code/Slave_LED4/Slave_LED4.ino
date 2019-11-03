@@ -10,20 +10,21 @@
 #include "Adafruit_Pixie.h"
 
 #define SS 53
-#define NUMPIXELS4 10 // Number of Pixies in the strip
+#define NUMPIXELS4 60// Number of Pixies in the strip
 #define PIXIEPIN  6 // Pin number for SoftwareSerial output
 
 SoftwareSerial pixieSerial(-1, PIXIEPIN);
 Adafruit_Pixie strip = Adafruit_Pixie(NUMPIXELS4, &pixieSerial);
 
 const int bufferSize = NUMPIXELS4 * 3;
-byte showByte = 1;
+byte showByte = 0;
 byte buf[bufferSize];
 volatile byte m_pos = 0;
 volatile boolean m_process_it = false;
  
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial1.begin(115200);
   // have to send on master in, *slave out*
   pixieSerial.begin(115200); // Pixie REQUIRES this baud rate
   //strip.setBrightness(200);  // Adjust as necessary to avoid blinding
@@ -60,15 +61,13 @@ ISR (SPI_STC_vect) {
 
   byte c = SPDR;  // grab byte from SPI Data Register
  if( c == 0 ){
-    showByte = 0;
+	 m_process_it = true;
     Serial.println("show command");
     }
   else if( m_pos < sizeof(buf)){
     buf[ m_pos++ ]=c;  
   }
-  else if( m_pos ==  sizeof(buf) ){
-    m_process_it = true;
-  }
+  
 }
  
 void loop() {
@@ -79,18 +78,20 @@ void loop() {
 
     for(int i=0; i<NUMPIXELS4; i++) { //NUMPIXELS
       strip.setPixelColor (i, buf[i*3+0], buf[i*3+1], buf[i*3+2] );
-      Serial.println( buf[i*3+0]);
-      Serial.println( buf[i*3+1]);
-      Serial.println( buf[i*3+2]);
+
+      Serial1.println( buf[i*3+0]);
+      Serial1.println( buf[i*3+1]);
+      Serial1.println( buf[i*3+2]);
 
       }
-  }
-  if(showByte == 0){
+  
+  
     strip.show(); // show command has been  recieved
-    showByte = 1;
+ 
     m_pos = 0;
     m_process_it = false;
+
+	//SPI.endTransaction();// // enable interrupt
     }
-  delay(10);
-  //SPI.endTransaction();// // enable interrupt
+ 
 }

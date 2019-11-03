@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
  
-public class Triangulator
+public class CircleMesh
 {
     private List<Vector2> m_points = new List<Vector2>();
+
     const float M_PI = 3.1415926535897932384626433832795f;
 
 
-    public Triangulator(Vector2[] points)
+    public CircleMesh(float radius)
     {
-        m_points = new List<Vector2>(points);
+        m_points = new List<Vector2>( FindPointsOnCircle( radius) );
     }
 
 

@@ -55,12 +55,21 @@ public class IRSensorMasterController : MonoBehaviour
 
         m_serialPort = new SerialPort(m_portName, 115200); // bit rate= 567000 bps
 
+        //m_serialPort.ReceivedBytesThreshold = 4 * 2; // four sensors each with 2 bytes
 
         //m_SerialPort.ReadTimeout = 50;
         //m_serialPort.ReadTimeout = 1000;  // sets the timeout value before reporting error
-                                          //  m_SerialPort1.WriteTimeout = 5000??
-        m_serialPort.Open();
+        //  m_SerialPort1.WriteTimeout = 5000??
 
+        try
+        {
+            m_serialPort.Open();
+        }
+
+        catch (Exception ex)
+        {
+            Debug.Log("Error:" + ex.ToString()) ;
+        }
 
         //m_SerialToArduinoMgr = new SerialToArduinoMgr();
 
@@ -250,7 +259,7 @@ public class IRSensorMasterController : MonoBehaviour
 
         // //public abstract int Read(byte[] buffer, int offset, int count);
 
-     
+        // 4096 = SerialPort.ReadBufferSize
         int numBytesToRead = m_IRDistanceBytes.Length;
 
        

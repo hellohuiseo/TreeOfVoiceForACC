@@ -23,7 +23,9 @@ unsigned long m_deltaTime = 20; //평균내는단위
 
 void setup() {
     // Multiple Sharp IR Distance meter code for Robojax.com
- Serial.begin(9600);
+ Serial.begin(115200);
+ Serial1.begin(115200);
+
  for (int i=0; i<numReadings;i++){
   readings1[i]=0;
   readings2[i]=0;}
@@ -53,8 +55,10 @@ void loop() {
   total2=total2+readings2[readIndex];
   readIndex = readIndex +1;
 
-  if(readIndex>=numReadings){
-    readIndex=0;}
+  if(readIndex>=numReadings)
+  {
+    readIndex=0;
+  }
 
     average1=total1/numReadings;
     average2=total2/numReadings;

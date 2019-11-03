@@ -222,7 +222,7 @@ public class ActionPlanFileManager: MonoBehaviour
     public event Action<PointerEventData>  onPointerEnter;
 
   
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    public Dictionary<String, List<ActionPlanController.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
     ////public Dictionary<string, List<int>> myDict = new Dictionary<string, List<int>>();
 
@@ -256,7 +256,7 @@ public class ActionPlanFileManager: MonoBehaviour
     {
         _LoadActionPlan(m_actionPlan, fileName);
     }
-     void _SaveActionPlan(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> myDict, string fileName)
+     void _SaveActionPlan(Dictionary<string, List<ActionPlanController.Action>> myDict, string fileName)
     {
         string dictPath = UnityEngine.Application.dataPath + "/" + fileName;
 
@@ -273,7 +273,7 @@ public class ActionPlanFileManager: MonoBehaviour
     }
 
 
-    void _LoadActionPlan( Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> myDict, string fileName )
+    void _LoadActionPlan( Dictionary<string, List<ActionPlanController.Action>> myDict, string fileName )
     {
 
 
@@ -300,7 +300,7 @@ public class ActionPlanFileManager: MonoBehaviour
         // using (var reader = new StreamReader( openDialog.FileName)  )
 
         BinaryFormatter bf = new BinaryFormatter();
-        myDict = (Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>>)bf.Deserialize(file);
+        myDict = (Dictionary<string, List<ActionPlanController.Action>>)bf.Deserialize(file);
         file.Close();
 
     }

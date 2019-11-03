@@ -151,7 +151,7 @@ public class ActionPlanUpdateController: MonoBehaviour
 
     public Hashtable m_inputFieldHashTable;
 
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+   // public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
 
     
@@ -171,9 +171,11 @@ public class ActionPlanUpdateController: MonoBehaviour
 
         //}
 
+        m_actionPlanController = this.gameObject.GetComponent<ActionPlanController>();
+
         if (m_actionPlanController == null)
         {
-            Debug.LogError("The global Variable m_boidsController is not  defined in Inspector");
+            Debug.LogError("The ActionPlanController component should be added to CommHub");
 
         }
         //m_actionPlan = m_boidsController.m_actionPlan;
@@ -517,7 +519,7 @@ public class ActionPlanUpdateController: MonoBehaviour
     //•IDragHandler - OnDrag - Called on the drag object when a drag is happening
     //•IEndDragHandler - OnEndDrag - Called on the drag object when a drag finishes
 
-    void OnValueInput(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> actionPlan,
+    void OnValueInput(Dictionary<string, List<ActionPlanController.Action>> actionPlan,
                     string key, int indexToTimedAction, InputField inputField)
 
     {
@@ -577,7 +579,7 @@ public class ActionPlanUpdateController: MonoBehaviour
 
     //https://forum.unity.com/threads/cant-change-caret-position.431105/
 
-    void OnValueChanged(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> actionPlan,
+    void OnValueChanged(Dictionary<string, List<ActionPlanController.Action>> actionPlan,
                     string key, int indexToTimedAction, InputField inputField)
 
     {

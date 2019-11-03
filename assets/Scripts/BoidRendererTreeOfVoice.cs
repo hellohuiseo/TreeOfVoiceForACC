@@ -15,8 +15,13 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
      // This will acess the Component directly rather than the gameobject itself.
 
 
-    [SerializeField]  SimpleBoidsTreeOfVoice m_boids; // _boids.BoidBuffer is a ComputeBuffer
-    [SerializeField] Material _instanceMaterial;
+    SimpleBoidsTreeOfVoice m_boids; // _boids.BoidBuffer is a ComputeBuffer
+  
+
+
+    [SerializeField] Material m_boidInstanceMaterial;
+
+ 
 
     // [SerializeField] protected Vector3 RoomMinCorner = new Vector3(-10f, 0f, -10f);
     // [SerializeField] protected Vector3 RoomMaxCorner = new Vector3(10f, 12f, 10f);
@@ -26,13 +31,6 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
     // public int BoidsNum = 256;
 
 
-    protected Vector3  GroundMinCorner;
-    protected Vector3  GroundMaxCorner;
-
-    protected Vector3  CeilingMinCorner;
-    protected Vector3  CeilingMaxCorner;
-
-   
     
     // 보이드의 수
     int BoidsNum;
@@ -40,9 +38,10 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
     // GPU Instancing
     // Graphics.DrawMeshInstancedIndirect
     // 인스턴스화 된 쉐이더를 사용하여 특정 시간동안 동일한 메시를 그릴 경우 사용
-     Mesh _instanceMeshCircle;
+     Mesh m_instanceMeshCircle;
+  
 
-    [SerializeField]  Mesh _instanceMeshSphere;
+    [SerializeField]  Mesh m_instanceMeshSphere;
 
     public bool m_useCircleMesh = true;
    
@@ -55,7 +54,7 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 
    // int _meshNo; // set from SimpleBoids (used to be)
 
-    Mesh _instanceMesh;
+    Mesh m_boidInstanceMesh;
     public float m_scale = 1.0f; // the scale of the instance mesh
 
     //private ComputeBuffer colorBuffer;
@@ -65,137 +64,135 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
     //                     시작 인덱스 위치         (Start index location)
     //                     기본 정점 위치           (Base vertex location)
     //                     시작 인스턴스 위치       (Start instance location)
-    ComputeBuffer _argsBuffer;
-    readonly uint[] _args = new uint[5] { 0, 0, 0, 0, 0 };
+    ComputeBuffer m_boidArgsBuffer;
+   
+
+    uint[] m_boidArgs = new uint[5] { 0, 0, 0, 0, 0 };
+
 
     uint numIndices;
     Vector3[] vertices3D;
 
     int[] indices;
-    
 
 
-    // //Display.Length will always be 1 in the Editor. We dont have an implementation of display detection in editor as it works different. We are using Editor windows, not actual displays.
-    // //You can still use multiple display in the editor you just dont need to activate the displays like you do in a release.
 
-    // //https://stackoverflow.com/questions/43066541/unity-multiple-displays-not-working
-
-    // void InitializeCameras()
-    // {
+    //// Create Vector2 vertices
+    float unitRadius = 1f; // radius = 1m
 
 
-    //     // multiple camera tutorial: http://blog.theknightsofunity.com/using-multiple-unity-cameras-why-this-may-be-important/
-    //     //Did you notice that the default Unity 5 scene camera clears buffers to Skybox?
-    //     ////This is Main Camera in the scene
-    //     //Camera m_MainCamera;
-    //     //This is the second Camera and is assigned in inspector
-    //     // public Camera m_CameraTwo;
-
-    //     // Finding multiple cameras: https://answers.unity.com/questions/15801/finding-cameras.html
-    //     //(1) In your code use the following sysntax:
-    //     //Camera myCamera = GameObject.FindWithTag("MainCamera").GetComponent <> Camera > ();
-    //     //
-    //     // (2): 1) Simply drag a reference of the desired camera to a variable of type Camera in your script.
-
-    //     //2) use Camera.main if the camera you want is the only active one right now.
-
-    //     //3) If you have multiple cameras named uniquely, 
-    //     //check foreach (Camera c in Camera.allCameras) and  c.gameObject.name == "DesiredCamera" 
-    //     //then that is the camera you want.
-    //     //.ner, far, fieldOfView
-    //     // //Start the Camera field of view at 60
-    //     //m_FieldOfView = 60.0f; This is the vertical field of view; 
-    //     // .aspect = width / height
-    //     //.name
+    private void Awake()
+    { // initialize me
 
 
-    //     // Script inherits from MonoBehavior => Behavior => Component => object
-    //     // Camera component inherits from Behavior => Component => object
-    //     // Behaviours are Components that can be enabled or disabled.
-    //     // For example, Rigidbody cannot be enabled/disabled. This is why it inherits from the Component class instead of Behaviour.
-    //     // MonoBehaviour is the base class from which every Unity script derives.
-    //     //MonoBehaviour:
-    //     //The most important thing to note about MonoBehaviour is that you need it when you have to use corutines, Invoking,
-    //     //or any Unity callback functions such as physics OnCollisionEnter function, Start, OnEnable, OnDisable, etc.
-    //     //MonoBehaviour inherits from Behaviour so that your scripts can be enabled / disabled.
-    //     //Note that Behaviour and Component are used by Unity for internal stuff. You should not try to inherit your script from these.
+        // check if the global component object is defined
+        if (m_boidInstanceMaterial == null)
+        {
+            Debug.LogError("The global Variable _boidInstanceMaterial is not  defined in Inspector");
+            // EditorApplication.Exit(0);
+            return;
+        }
 
 
-    // Use this for initialization
+        MeshCreator meshCircleCreator = new MeshCreator();
+
+        m_instanceMeshCircle = meshCircleCreator.CreateCircleMesh(unitRadius);
+
+
+        //_instanceMeshCircle.RecalculateNormals();
+        //_instanceMeshCircle.RecalculateBounds();
+
+        m_boidArgsBuffer = new ComputeBuffer(
+            1, // count
+            m_boidArgs.Length * sizeof(uint),
+
+            ComputeBufferType.IndirectArguments
+        );
+
+
+        //var boidArray = new BoidData[BoidsNum];
+
+        //_meshNo = (int) _boids._meshSetting.MeshNo;
+        //_scale = _boids._meshSetting.Scale;
+
+        //https://jacx.net/2015/11/20/dont-use-equals-null-on-unity-objects.html
+
+        if (m_useCircleMesh) // use 2D boids => creat the mesh in a script
+        {
+
+            m_boidInstanceMesh = m_instanceMeshCircle;
+
+            // _boidInstanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale) );
+        }
+
+        else
+        {
+            m_boidInstanceMesh = m_instanceMeshSphere;
+
+            // _boidInstanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale));
+
+
+
+
+            //  _instanceMesh.RecalculateNormals();
+            // _instanceMesh.RecalculateBounds();
+
+
+        }
+        //        else {
+        //            Debug.LogError("useCircleMesh or useSphereMesh should be checked");
+        //            //If we are running in a standalone build of the game
+        //            #if UNITY_STANDALONE
+        //            //Quit the application
+        //            Application.Quit();
+        //            #endif
+
+        //            //If we are running in the editor
+        //            #if UNITY_EDITOR
+        //            //Stop playing the scene
+        //            // UnityEditor.EditorApplication.isPlaying = false;
+        //            //Setting isPlaying delays the result until after all script code has completed for this frame.
+
+        //            EditorApplication.Exit(0);
+        //            #endif
+        //        }
+
+
+
+        //Debug.Log("number of indices=");
+        //Debug.Log(_instanceMesh.GetIndexCount(0));
+
+        
+
+    }
     void Start () 
-	{
+	{   // initialize others
+
         // get the reference to SimpleBoidsTreeOfVoice
 
         m_boids = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+    
 
         if (m_boids == null)
         {
             Debug.LogError("SimpleBoidsTreeOfVoice component should be attached to CommHub");
             //EditorApplication.Exit(0);
-            Application.Quit();
+            // Application.Quit();
+            return;
             
         }
-
-        
-
-        // check if the global component object is defined
-        if (_instanceMaterial == null)
-        {
-            Debug.LogError("The global Variable _instanceMaterial is not  defined in Inspector");
-            EditorApplication.Exit(0);
-
-        }
-
-        GroundMaxCorner = m_boids.GroundMaxCorner;
-        GroundMinCorner = m_boids.GroundMinCorner;
-
-        CeilingMaxCorner = m_boids.CeilingMaxCorner;
-        CeilingMinCorner = m_boids.CeilingMinCorner;
+                
 
 
-        //Screen.SetResolution( sum of width of all displays, height, false)
-
-       
-        // InitializeCameras();
+        // check if _boids.BoidBuffer is not null
+        if (m_boids.m_BoidBuffer is null) return; // nothing to render; 
 
 
+        // _boids.BoidBuffer.GetData(boidArray);
+        // https://unity3d.com/kr/learn/tutorials/topics/graphics/gentle-introduction-shaders
 
-        // Create Vector2 vertices
-        float unitRadius = 1f; // radius = 1m
-        Vector2[] vertices = Triangulator.FindPointsOnCircle( unitRadius); // 2D circle on xz plane
-
-        // Use the triangulator to get indices for creating triangles
-        Triangulator tr = new Triangulator(vertices);
-        indices = tr.Triangulate();
-
-        vertices3D = new Vector3[vertices.Length];
-
-        for (int i=0; i < vertices.Length; i++)
-        {
-
-            vertices3D[i] = new Vector3(vertices[i].x, 0.0f, vertices[i].y);
-
-        }
-
-        _instanceMeshCircle = new Mesh();
-
-        _instanceMeshCircle.vertices = vertices3D;
-        _instanceMeshCircle.triangles = indices;
-        _instanceMeshCircle.RecalculateNormals();
-        _instanceMeshCircle.RecalculateBounds();
-
-
-
-
-        // for debugging
-
-        // _instanceMesh = GetComponent < Mesh > (); // get the Mesh component for the current gameboject
-
-        _argsBuffer = new ComputeBuffer(
-			1, 
-			_args.Length * sizeof(uint), 
-			ComputeBufferType.IndirectArguments
-		);
+        //Debug.Log("Current Num of Boids=");
+        //Debug.Log(_boids.BoidsNum);
 
 
         //https://answers.unity.com/questions/979080/how-to-pass-an-array-to-a-shader.html
@@ -212,15 +209,34 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
         //renderer.material.SetVector("_SomeVariable", value);
 
         // Use SetVector() rather than setFloatArray
-        _instanceMaterial.SetVector("GroundMaxCorner",  GroundMaxCorner);
-        _instanceMaterial.SetVector("GroundMinCorner", GroundMinCorner);
 
-         _instanceMaterial.SetVector("CeilingMaxCorner", CeilingMaxCorner);
-         _instanceMaterial.SetVector("CeilingMinCorner", CeilingMinCorner);
 
-       // _instanceMaterial.SetFloat("Use3DBoids", Use3DBoids);
+        // BOIDS Drawing
 
-        _instanceMaterial.SetBuffer("_BoidBuffer", m_boids.BoidBuffer); // m_boids.BoidBuffer is ceated in SimpleBoids.cs
+        numIndices = m_boidInstanceMesh ? m_boidInstanceMesh.GetIndexCount(0) : 0;
+        //GetIndexCount(submesh = 0)
+
+
+
+        m_boidArgs[0] = numIndices;  // the number of indices in the set of triangles
+        m_boidArgs[1] = (uint)m_boids.m_BoidsNum; // the number of instances
+
+        m_boidArgsBuffer.SetData(m_boidArgs);
+
+
+        m_boidInstanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale) );
+
+        m_boidInstanceMaterial.SetVector("GroundMaxCorner", m_boids.GroundMaxCorner);
+        m_boidInstanceMaterial.SetVector("GroundMinCorner", m_boids.GroundMinCorner);
+
+        m_boidInstanceMaterial.SetVector("CeilingMaxCorner", m_boids.CeilingMaxCorner);
+        m_boidInstanceMaterial.SetVector("CeilingMinCorner", m_boids.CeilingMinCorner);
+
+        m_boidInstanceMaterial.SetBuffer("_BoidBuffer", m_boids.m_BoidBuffer); 
+        // m_boids.BoidBuffer is ceated in SimpleBoids.cs
+
+
+
     } // Start()
 	
 	// Update is called once per frame
@@ -232,105 +248,43 @@ public class BoidRendererTreeOfVoice : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		if(_argsBuffer == null) return;
-		_argsBuffer.Release();
-		_argsBuffer = null;
-	}
+		if(m_boidArgsBuffer == null) return;
+		m_boidArgsBuffer.Release();
+		m_boidArgsBuffer = null;
+
+
+    }
 
 	private void RenderInstancedMesh()
 	{
-        //var boidArray = new BoidData[BoidsNum];
-
-        //_meshNo = (int) _boids._meshSetting.MeshNo;
-        //_scale = _boids._meshSetting.Scale;
-
-        if ( m_useCircleMesh ) // use 2D boids => creat the mesh in a script
-        {
-           
-            _instanceMesh = _instanceMeshCircle;
-
-            _instanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale) );
-        }
-
-        else 
-        {
-            _instanceMesh = _instanceMeshSphere;
-
-            _instanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale));
-
-
-
-
-            //  _instanceMesh.RecalculateNormals();
-            // _instanceMesh.RecalculateBounds();
-
-
-        }
-//        else {
-//            Debug.LogError("useCircleMesh or useSphereMesh should be checked");
-//            //If we are running in a standalone build of the game
-//            #if UNITY_STANDALONE
-//            //Quit the application
-//            Application.Quit();
-//#endif
-
-//            //If we are running in the editor
-//            #if UNITY_EDITOR
-//            //Stop playing the scene
-//            // UnityEditor.EditorApplication.isPlaying = false;
-//            //Setting isPlaying delays the result until after all script code has completed for this frame.
-
-//            EditorApplication.Exit(0);
-//            #endif
-//        }
-
-
-
-        //Debug.Log("number of indices=");
-        //Debug.Log(_instanceMesh.GetIndexCount(0));
-
-
-        // Indirect 
-        numIndices = _instanceMesh ? _instanceMesh.GetIndexCount(0) : 0;
-        //GetIndexCount(submesh = 0)
-
-
-
-        // check if _boids.BoidBuffer is not null
-        if (m_boids.BoidBuffer == null) return; // nothing to render; 
-
-
-        // _boids.BoidBuffer.GetData(boidArray);
-        // https://unity3d.com/kr/learn/tutorials/topics/graphics/gentle-introduction-shaders
-
-        //Debug.Log("Current Num of Boids=");
-        //Debug.Log(_boids.BoidsNum);
-
-        _args[0] = numIndices;
-        _args[1] = (uint)m_boids.m_BoidsNum;
-
-        _argsBuffer.SetData(_args);
-
-
-
+        //"_BoidBuffer" is changed by SimpleBoidsTreeOfVoice
+        // for debugging, comment out
         Graphics.DrawMeshInstancedIndirect(
-			_instanceMesh,
-			0,
-			_instanceMaterial,
-			new Bounds(m_boids.RoomCenter, m_boids.RoomSize), 
-			_argsBuffer
-		);
+            m_boidInstanceMesh,
+            0,
+            m_boidInstanceMaterial, // This material defines the shader which receives instanceID
+            new Bounds(m_boids.RoomCenter, m_boids.RoomSize),
+            m_boidArgsBuffer // this contains the information about the instances: see below
+        );
+
+        // _boidArgs = 
+        ////                     인스턴스 당 인덱스 수    (Index count per instance)
+        ////                     인스턴스 수              (Instance count)
+        ////                     시작 인덱스 위치         (Start index location)
+        ////                     기본 정점 위치           (Base vertex location)
+        ////                     시작 인스턴스 위치       (Start instance location)
+        //ComputeBuffer _argsBuffer;
+        // uint[] _boidArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
 
         // reading from the buffer written by regular shaders
         //https://gamedev.stackexchange.com/questions/128976/writing-and-reading-computebuffer-in-a-shader
-       
+
         // _boids.BoidBuffer.GetData(boidArray);
 
 
 
-
-    }
+    }//private void RenderInstancedMesh()
 
     //  public struct BoidData
     //  {

@@ -32,7 +32,7 @@ public class UnityPointerEventTest : MonoBehaviour, IPointerDownHandler, IPointe
     public int  m_canvasWidth, m_canvasHeight; // the canvas size is set to the size of the game view screen automatically
                                          // The actuall scroll rect size is set to the size of the canvas
 
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    public Dictionary<String, List<ActionPlanController.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
 
     int m_lastScreenWidth;
@@ -103,7 +103,7 @@ public class UnityPointerEventTest : MonoBehaviour, IPointerDownHandler, IPointe
     //The easiest way to find this multiplier is to set the font size to 100 and then find the height needed for it to display. 
     //Then knowing that ratio, you'll be able to correctly calculate the height needed for a given font size.
     
-    List<SimpleBoidsTreeOfVoice.Action> m_timedActions;
+    List<ActionPlanController.Action> m_timedActions;
 
     float m_currentLocalXPosition;
     float m_currentLocalYPosition;
@@ -314,7 +314,7 @@ public class UnityPointerEventTest : MonoBehaviour, IPointerDownHandler, IPointe
 
     
 
-    void OnValueInput(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action> > actionPlan, 
+    void OnValueInput(Dictionary<string, List<ActionPlanController.Action> > actionPlan, 
                     string key, int indexToTimedAction, InputField inputField )
       
      {
@@ -374,7 +374,7 @@ public class UnityPointerEventTest : MonoBehaviour, IPointerDownHandler, IPointe
 
     //https://forum.unity.com/threads/cant-change-caret-position.431105/
 
-    void OnValueChanged(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> actionPlan,
+    void OnValueChanged(Dictionary<string, List<ActionPlanController.Action>> actionPlan,
                     string key, int indexToTimedAction, InputField inputField)
 
     {

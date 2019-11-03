@@ -86,8 +86,14 @@ using System.Text;
 // each of which is invoked directly by the main CommHub script or through delegates which is controlled by main CommHub
 public class ActionPlanController : MonoBehaviour
 {
-    
-    
+
+    public class Action
+    {
+        public List<float> T;
+        public float V;
+
+    }
+
     Button m_loadButton;
     Button m_saveButton;
 
@@ -109,7 +115,8 @@ public class ActionPlanController : MonoBehaviour
     public delegate void OnLoadActionPlan(Dictionary<string, List<int>> dict, string _file);
     public static OnLoadActionPlan onLoadActionPlan;
 
-    public SimpleBoidsTreeOfVoice m_boidsController; // set in the inspector
+    public SimpleBoidsTreeOfVoice m_boidsController; // 
+
     // This is a component class; So you can attach it to the gameobject to which ActionPlannerController
     // Component is attached. Then you can get the reference to this component by gameObject.GetComponent<SimpleBoidsTreeOfVoice>()
 
@@ -124,7 +131,7 @@ public class ActionPlanController : MonoBehaviour
     public int  m_canvasWidth, m_canvasHeight; // the canvas size is set to the size of the game view screen automatically
                                          // The actuall scroll rect size is set to the size of the canvas
 
-    public Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    public Dictionary<String, List<Action> > m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
 
     int m_lastScreenWidth;
@@ -196,7 +203,7 @@ public class ActionPlanController : MonoBehaviour
     //The easiest way to find this multiplier is to set the font size to 100 and then find the height needed for it to display. 
     //Then knowing that ratio, you'll be able to correctly calculate the height needed for a given font size.
     
-    List<SimpleBoidsTreeOfVoice.Action> m_timedActions;
+    List<Action> m_timedActions;
 
     float m_currentLocalXPosition;
     float m_currentLocalYPosition;
@@ -317,7 +324,7 @@ public class ActionPlanController : MonoBehaviour
         m_valueTextHeight = m_textGen.GetPreferredHeight(sampleText, m_generationSettings);
 
         //https://stackoverflow.com/questions/43592712/what-does-actually-fontsize-mean-in-unity/43595518
-        
+
         //  Text component font sizes in Unity are measured in "pixels of height" and are 1:1 with screen pixels
         //  (except when the transform--or any of its parent transforms--are scaled, 
         //   or if the canvas itself is in Worldspace (in which case you kinda have to guess)).
@@ -345,7 +352,21 @@ public class ActionPlanController : MonoBehaviour
         //                                // which are Screen.height, Screen.width of the primary display (display 1)
         //m_canvasWidth = Screen.width;
 
-        m_canvasObj = this.gameObject;
+        // Get the reference to Canvas GameObject
+        // someObject = transform.parent.gameObject.transform.GetChild(0).gameObject;
+
+        //m_canvasObj = this.gameObject;
+        // UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects()
+        //
+        //Nop.GO's at the top of the GO hierarchy will have transform.parent set to null.
+        //If you really need a global parent, you could just do that yourself by moving all your GOs into one top-level GO.
+
+
+        Debug.Log("CommHub:" + this.gameObject );
+
+        m_canvasObj = this.gameObject.transform.GetChild(0).gameObject;
+
+        Debug.Log("Canvas Obj:" + m_canvasObj);
 
         //        public void SetParent(Transform parent, bool worldPositionStays);
 
@@ -359,7 +380,7 @@ public class ActionPlanController : MonoBehaviour
         // m_headerBarObj = m_canvasObj.transform.GetChild(0.gameObject;
         // Get the second child of the canvas:
 
-       
+
 
         m_scrollViewObj = m_canvasObj.transform.GetChild(0).gameObject;
         // m_scrollViewObj.transform.SetParent(m_canvasObj.transform, false);
@@ -374,7 +395,11 @@ public class ActionPlanController : MonoBehaviour
         m_scrollbarVerticalObj = m_scrollViewObj.transform.GetChild(2).gameObject;
         // m_scrollbarVerticalObj.transform.SetParent(m_scrollViewObj.transform, false);
 
+        Debug.Log("viewport Obj:" + m_viewportObj);
+
         m_contentObj = m_viewportObj.transform.GetChild(0).gameObject;
+
+        Debug.Log("content  Obj:" + m_contentObj );
 
         m_contentTitleObj = m_viewportObj.transform.GetChild(1).gameObject;
         
@@ -507,6 +532,11 @@ public class ActionPlanController : MonoBehaviour
             // m_guiCamera.aspect =  Screen.width/ Screen.height;
         }
 
+        //Initialize actionPlan
+
+        InitActionPlan();
+
+        SetupActionPlanGUI();
 
 
         //m_canvas.targetDisplay = 2; No effect. Canvas.targetDisplay in Screen Space-Camera mode is 
@@ -671,6 +701,468 @@ public class ActionPlanController : MonoBehaviour
     //https://answers.unity.com/questions/842610/instantiating-ui-elements-in-46.html?childToView=953022#answer-953022
     //https://stackoverflow.com/questions/41194515/unity-create-ui-control-from-script
 
+    void InitActionPlan()
+    {
+
+        //Initialize me:
+
+        m_actionPlan = new Dictionary<String, List<Action>>()
+        {
+
+             //{ "_BoidsNum", new List<Action> {   new Action() { T = new List<float> {0, 390 },
+             //                                                   V = 1500 },
+             //                                 }
+             //},
+
+              { "_SpeedFactor", new List<Action> { new Action() { T =new List<float>{ 0, 30}, V  = 0.3f  },
+                                                    new Action() { T = new List<float>{30, 140 }, V = 0.5f},
+
+                                                 new Action() { T = new List<float>{140, 200 }, V =0.3f },
+                                                new Action() { T = new List<float>{200, 390 }, V =0.5f  },
+
+                                                 }
+             },
+
+              { "_ScaleFactor", new List<Action> {  new Action() { T  = new List<float>{0,  390 },  V =1f },
+
+                                                  }
+             },
+
+              { "_SeparateRadius", new List<Action> {   new Action() { T=new List<float> {0, 30 }, V= 2f },
+
+                                                    new Action() { T = new List<float>{30, 60 }, V = 0.5f },
+                                                        new Action() { T = new List<float>{60, 100 }, V = 0.9f },
+                                                            new Action() { T = new List<float>{100, 140 }, V = 1.2f  },
+
+                                                new Action() { T = new List<float>{140,  230 }, V =4.4f},
+                                                 new Action() { T= new List<float>{230, 260 }, V = 0.5f},
+                                                  new Action() { T = new List<float>{260,  300 }, V = 4.4f },
+
+                                                new Action() { T =new List<float> {300, 360 }, V =2f  },
+                                                    new Action() { T = new List<float>{360, 390 }, V = 0.5f  },
+
+
+                                               }
+             },
+
+              { "_SeparateWeight", new List<Action> {  new Action() { T=new List<float> {0, 30 }, V = 0.43f },
+
+                                                    new Action() { T =new List<float> {30, 60 }, V = 0.1f },
+                                                        new Action() { T =new List<float>{ 60, 100 }, V = 0.3f},
+                                                            new Action() { T =new List<float>{ 100, 140 }, V =0.2f },
+
+                                                    new Action() { T = new List<float>{140, 230 }, V = 0.3f },
+                                                            new Action() { T =new List<float>{ 230, 260 },  V =0.1f },
+                                                                new Action() { T =new List<float> {260, 300 }, V = 0.3f },
+
+                                                    new Action() { T =new List<float> {300, 360 }, V = 0.1f  },
+                                                        new Action() { T = new List<float>{360, 390 }, V = 0.8f },
+
+                                               }
+             },
+
+              { "_AlignmentRadius", new List<Action> {  new Action() { T =new List<float> {0, 30 }, V = 2f},
+
+                                                    new Action() { T= new List<float>{30, 60 }, V= 2.8f },
+                                                        new Action() { T= new List<float>{60, 100 }, V = 3.5f },
+                                                            new Action() { T = new List<float>{100, 140 }, V = 1.7f},
+
+                                                    new Action() { T =new List<float>{ 140, 200 }, V = 1.8f },
+
+                                                        new Action() { T = new List<float>{200, 230 }, V = 3.2f},
+                                                            new Action() { T = new List<float>{230, 260 }, V =2.8f },
+                                                                new Action() { T =new List<float>{ 260, 300 }, V = 1.8f  },
+
+                                                    new Action() { T = new List<float>{300, 360 }, V =4.0f},
+                                                        new Action() { T = new List<float>{360, 390 }, V =2.1f },
+
+                                               }
+             },
+
+              { "_AlignmentWeight", new List<Action> {  new Action() { T = new List<float>{0, 30 }, V =  0.3f },
+
+                                                    new Action() { T =  new List<float>{30, 60 }, V =  0.6f  },
+                                                        new Action() { T =  new List<float>{60, 140 }, V=  0.3f},
+
+                                                    new Action() { T =  new List<float>{140, 230 }, V= 0.1f  },
+
+                                                            new Action() { T =  new List<float>{230, 260 }, V = 0.6f },
+                                                                new Action() { T =  new List<float>{260, 300 }, V = 0.8f },
+
+                                                    new Action() { T =  new List<float>{300, 360 }, V =  0.8f },
+                                                        new Action() { T =  new List<float>{360, 390 }, V = 0.6f },
+
+
+                                               }
+             },
+
+              { "_CohesionRadius", new List<Action> {  new Action() { T =  new List<float>{0, 30 }, V = 0.2f },
+
+                                                        new Action() { T= new List<float>{30, 60 }, V= 1.2f },
+                                                            new Action() {T= new List<float>{60, 140 }, V = 0.1f },
+
+                                                    new Action() { T =  new List<float>{140, 230 }, V =  2.9f  },
+                                                     new Action() { T =  new List<float>{230, 300 }, V =  1.1f },
+                                                   new Action() { T =  new List<float>{300, 360 }, V =  2f },
+                                                        new Action() { T = new List<float>{ 360, 390 }, V = 1.1f},
+
+
+
+                                               }
+             },
+
+              { "_CohesionWeight", new List<Action> {
+
+                  new Action() { T  = new List<float>{ 0, 30 }, V = 0.2f },
+
+                    new Action() { T= new List<float> {30, 60 }, V = 0.02f },
+                        new Action() { T=  new List<float>{60, 100 }, V = 0.4f },
+                            new Action() { T =  new List<float>{100,140 },  V = 0.1f },
+
+                new Action() { T =  new List<float>{140, 230 }, V = 0.4f },
+                         new Action() { T=  new List<float>{230, 260 }, V = 0.1f },
+                            new Action() { T =  new List<float>{260,300 }, V =  0.7f  },
+
+                new Action() { T=  new List<float>{300, 360 }, V = 0.2f },
+                    new Action() { T=  new List<float>{360, 390 }, V = 0.1f },
+
+                                               }
+             },
+
+
+
+            //
+            { "_GroundFlockingWeight", new List<Action> {
+
+                new Action() { T = new List<float>{ 0, 30 }, V = 0.3f },
+
+                    new Action() { T =  new List<float>{30, 60 }, V = 0.5f },
+                        new Action() { T = new List<float>{ 60, 100 }, V = 1.4f},
+                            new Action() { T= new List<float> {100,140 }, V=  0.4f},
+
+                new Action() { T = new List<float> {140,200 }, V =  0.2f },
+
+                    new Action() { T =  new List<float>{200,230 }, V =  1.9f },
+                        new Action() { T =  new List<float>{230, 260 },  V = 0.5f },
+                            new Action() { T = new List<float>{ 260, 300 }, V =  1.8f },
+
+                new Action() { T=  new List<float>{300,360 },  V =  0.3f },
+                    new Action() { T=  new List<float>{360, 390 }, V = 0.5f  },
+
+                                               }
+             },
+
+            { "_GroundDivergeWeight", new List<Action> {
+
+                new Action() { T = new List<float>{ 0,30 },  V =  0.2f  },
+
+                    new Action() { T =  new List<float>{30,60 },  V = 0.5f },
+                        new Action() { T= new List<float>{ 60,100 }, V =  0.5f },
+                            new Action() { T =  new List<float>{100,140 },  V = 0.5f },
+
+                new Action() { T =  new List<float>{140, 200},  V = 0.3f  },
+
+                    new Action() { T =  new List<float>{200,230 },  V = 0.7f },
+                        new Action() { T=  new List<float>{230,260 }, V =  0.1f },
+                            new Action() { T =  new List<float>{260,300 },  V = 0.1f },
+
+                new Action() { T =  new List<float>{300, 360 }, V =   0.7f },
+                    new Action() { T =  new List<float>{360, 390 }, V =0.1f },
+
+                                               }
+             },
+
+            { "_GroundCirculationWeight", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 30 },  V = 0.5f },
+
+                    new Action() { T =  new List<float>{30,60 },  V = 0.2f  },
+                        new Action() { T =  new List<float>{60, 100 },  V = 0.3f },
+                            new Action() { T =  new List<float>{100, 140 }, V = 0.3f  },
+                new Action() { T =  new List<float>{140,200 },  V =  0.5f  },
+                    new Action() { T=  new List<float>{200, 230 },  V = 0.3f  },
+                        new Action() { T = new List<float> {230, 260 },  V = 0.2f  },
+                            new Action() { T=  new List<float>{260,300 },  V = 0.3f },
+
+                new Action() { T = new List<float> {300, 360 }, V =0.1f  },
+                    new Action() { T=  new List<float>{360, 390 }, V = 0.2f},
+
+                                               }
+             },
+
+
+            { "_CeilingFlockingWeight", new List<Action> {
+
+                new Action() { T = new List<float> {0, 30 }, V = 0.2f },
+
+                    new Action() { T =  new List<float>{30,60 }, V = 3.4f },
+                        new Action() { T =  new List<float>{60, 100 }, V =  4.8f  },
+                            new Action() { T =  new List<float>{100, 140 }, V = 1.0f   },
+
+                new Action() { T =  new List<float>{ 140, 200 },  V=  3.0f   },
+                    new Action() { T =  new List<float>{200, 230 }, V =  3.9f   },
+                        new Action() { T = new List<float> {230,260 }, V = 1.2f },
+                            new Action() { T=  new List<float>{260, 300 }, V =  1.0f },
+
+                new Action() { T = new List<float> {300, 360 }, V = 0.2f },
+                    new Action() { T=  new List<float>{360, 390 }, V = 1.2f  },
+
+
+
+                                               }
+             },
+
+            { "_CeilingConvergeWeight", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 30 },  V = 0.3f  },
+
+                    new Action() { T= new List<float> {30, 60 }, V =  0.5f   },
+                        new Action() { T =  new List<float>{60, 140 },  V = 0.5f   },
+
+
+                 new Action() { T = new List<float>{ 140, 200 }, V = 0.3f  },
+                    new Action() { T = new List<float> {200, 230 },  V =  0.6f  },
+                        new Action() { T=  new List<float>{230, 260 },  V =  0.3f },
+                            new Action() { T=  new List<float>{260,300 },  V = 0.1f },
+
+                new Action() { T = new List<float> {300, 360 }, V = 0.3f },
+                    new Action() { T = new List<float> {360, 390 }, V = 0.3f },
+
+
+                                               }
+             },
+
+            { "_CeilingCirculationWeight", new List<Action> {
+
+                new Action() { T=  new List<float>{0, 30},  V =  0.5f   },
+
+                    new Action() { T =  new List<float>{30, 60 }, V = 0.2f  },
+                        new Action() { T = new List<float> {60, 100 }, V =  0.3f },
+                            new Action() { T=  new List<float>{100f,140 },  V = 0.2f },
+
+                new Action() { T=  new List<float>{140, 200 },  V =0.5f },
+
+                    new Action() { T=  new List<float>{200,230 },  V =0.1f },
+                        new Action() { T = new List<float> {230f,260 },  V = 0.1f },
+                            new Action() { T = new List<float> {260, 300 }, V =0.2f  },
+
+                new Action() { T =  new List<float>{300, 360 }, V =  0.5f },
+                    new Action() { T =  new List<float>{360,390 }, V =   0.1f  },
+
+                                               }
+             },
+
+
+
+
+            //
+            { "_GroundMinHue", new List<Action> {
+
+                new Action() { T = new List<float>{ 0, 60 }, V =  1f},
+                       new Action() { T =  new List<float>{60,100 },  V = -0.1f},
+                            new Action() { T =  new List<float>{100, 140 }, V = 0.1f },
+
+                new Action() { T =  new List<float>{140,200 }, V =  0.6f },
+
+                    new Action() { T =  new List<float>{200,300 },  V = 0.47f },
+                      new Action() { T=  new List<float>{300, 360 }, V = -0.3f},
+                    new Action() { T =  new List<float>{360, 390 }, V = 0.8f },
+
+
+                                               }
+             },
+
+            { "_GroundMaxHue", new List<Action> {
+
+                new Action() { T = new List<float> {0, 60}, V = 0.7f },
+                    new Action() { T = new List<float> {60,100 },  V = 0.3f},
+                         new Action() { T = new List<float> {100,140 },  V = 0.3f },
+
+                new Action() { T = new List<float> {140,200},  V =0.5f  },
+
+                    new Action() { T =  new List<float>{200, 230 }, V = 0.6f  },
+                        new Action() { T=  new List<float>{230, 300 }, V =  1.0f },
+
+                new Action() { T =  new List<float>{300, 360 },  V =0.1f },
+                    new Action() { T =  new List<float>{360, 390 },  V = 1.0f },
+
+                                               }
+             },
+
+            { "_GroundMinSaturation", new List<Action> {
+
+                new Action() { T =  new List<float>{ 0, 140 }, V = 0f },
+                    new Action() { T =  new List<float>{140,200 },  V = 1f },
+
+                    new Action() { T =  new List<float>{200, 230 }, V = 0.8f },
+                        new Action() { T =  new List<float>{230, 300 }, V = 1.0f   },
+
+                new Action() { T =  new List<float>{300, 360 },  V =  0.2f },
+                    new Action() { T =  new List<float>{360,390 }, V =  0f },
+
+                                               }
+             },
+
+            { "_GroundMaxSaturation", new List<Action> {
+
+                new Action() { T =  new List<float>{0,140 },  V =  0.7f },
+
+                new Action() { T =  new List<float>{140,230 },  V =  0.1f },
+                       new Action() { T = new List<float> {230, 300 },  V =1.0f },
+
+                new Action() { T = new List<float> {300, 360 }, V = 0.8f  },
+                    new Action() { T =  new List<float>{360, 390 }, V = 0.7f},
+
+                                               }
+             },
+
+            { "_GroundMinValue", new List<Action> {
+
+                new Action() { T = new List<float> {0,140 }, V =1f},
+
+                new Action() { T=  new List<float>{140,230 },  V =  0.8f },
+
+                new Action() { T =  new List<float>{230, 360 }, V = 0.7f },
+                    new Action() { T =  new List<float>{360,390 }, V = 1f },
+
+                                               }
+             },
+
+            { "_GroundMaxValue", new List<Action> {
+
+                                     new Action() { T =  new List<float>{0,390 },  V =  1f },
+                                 }
+             },
+
+        { "_GroundMinAlpha", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 140 }, V = 0.2f },
+
+                new Action() { T =  new List<float>{140,230 }, V=  0.3f },
+                    new Action() { T = new List<float>{230, 300 },  V =1.0f},
+
+                new Action() { T =  new List<float>{300, 390 }, V =   0.2f },
+
+                                               }
+             },
+
+            { "_GroundMaxAlpha", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 140 }, V =  0.8f },
+
+                new Action() { T = new List<float> {140,230 }, V =  0.9f  },
+                    new Action() { T =  new List<float>{230, 300 }, V = 1.0f},
+
+                new Action() { T =  new List<float>{300, 360 }, V=   0.4f},
+                    new Action() { T=  new List<float>{360, 390 },  V =  0.8f },
+
+
+                                               }
+             },
+                                                  
+
+
+            //
+            { "_CeilingMinHue", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 30 }, V =  -0.1f },
+
+                    new Action() { T =  new List<float>{30, 60 }, V = 0.7f } ,
+                        new Action() { T =  new List<float>{60, 100 }, V =  0.5f },
+                            new Action() { T =  new List<float>{100, 140 }, V =0.9f },
+
+                new Action() { T =  new List<float>{140, 230 }, V = 0.07f },
+                         new Action() { T =  new List<float>{230,300 },  V = 1.0f },
+
+                new Action() { T=  new List<float>{300, 360 }, V=  0.8f },
+                    new Action() { T =  new List<float>{360,390 }, V =  -0.3f },
+
+
+                                               }
+             },
+
+            { "_CeilingMaxHue", new List<Action> {
+
+                new Action() { T = new List<float> {0, 30f }, V =  0.1f },
+
+                    new Action() { T=  new List<float>{30,60 },  V =0.6f },
+                        new Action() { T= new List<float> {60,100 },  V = 0.3f },
+                            new Action() { T=  new List<float>{100,140 },  V = 0.5f } ,
+
+                new Action() { T =  new List<float>{140, 230 }, V =0.1f },
+
+                        new Action() { T=  new List<float>{230, 390 }, V=   1.0f },
+
+                      }
+             },
+
+            { "_CeilingMinSaturation", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 230 }, V = 0.2f  },
+                    new Action() { T =  new List<float>{230, 360 }, V =  1.0f },
+
+                    new Action() { T =  new List<float>{360,390 }, V =  0.2f },
+
+                    }
+             },
+
+            { "_CeilingMaxSaturation", new List<Action> {
+
+                new Action() { T=  new List<float>{0, 140 }, V =   0.8f  },
+
+                new Action() { T=  new List<float>{140,300 }, V = 1f },
+
+                new Action() { T = new List<float> {300,360 }, V =  0.7f  },
+                    new Action() { T = new List<float> {360, 390 }, V = 0.8f },
+
+
+                }
+             },
+
+            { "_CeilingMinValue", new List<Action> {
+
+                new Action() { T = new List<float> {0, 140 }, V = 0.2f },
+
+                new Action() { T =  new List<float>{140,230 },  V = 0.2f },
+                    new Action() { T=  new List<float>{230, 360 }, V =1.0f } ,
+
+                        new Action() { T =  new List<float>{360,390 }, V = 0.2f },
+
+
+                 }
+             },
+
+            { "_CeilingMaxValue", new List<Action> {
+
+                new Action() { T = new List<float> {0,390 }, V=  1f   },
+
+                }
+             },
+
+            { "_CeilingMinAlpha", new List<Action> {
+
+                new Action() { T =  new List<float>{ 0, 390 }, V = 0.2f  },
+
+                }
+             },
+
+            { "_CeilingMaxAlpha", new List<Action> {
+
+                new Action() { T =  new List<float>{0, 140 }, V = 0.8f  },
+
+                new Action() { T = new List<float> {140,230 },  V =  0.6f },
+                    new Action() { T =  new List<float>{230, 300 }, V =0.8f },
+
+
+                new Action() { T= new List<float> {300,360 }, V =  0.8f },
+                    new Action() { T =  new List<float>{360,390 }, V =0.8f  },
+
+                }
+             },
+
+        }; //    actionPlan = new Dictionary<String, List<Action> >  ()
+
+    }
     GameObject CreateText(Transform canvas_transform, float x, float y, string text_to_print, int font_size, Color text_color)
     {
         GameObject UItextGO = new GameObject("Text2");
@@ -765,26 +1257,24 @@ public class ActionPlanController : MonoBehaviour
 
     // https://stackoverflow.com/questions/53005040/what-i-have-learned-about-unity-scrollrect-scrollview-optimization-performan
     //https://wergia.tistory.com/25 ScrollView 사용법
-    void Start()    
+    void SetupActionPlanGUI()    
     {
         Debug.Log("I am in Canvas Test");
 
-      
-        //m_paramTextHeight *= 1.2f;
 
 
         //"initialize my connections to others, which have been initialized by their own Awake()
 
-        //Font ArialFont = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
-
         // Check if global components are defined
+        m_boidsController = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+
         if ( m_boidsController == null)
         {
-            Debug.LogError("The global Variable m_boidsController is not  defined in Inspector");
-            Application.Quit();
+            Debug.LogError("The component SimpleBoidsTreeOfVoice should be added to CommHub");
+            //Application.Quit();
 
         }
-        m_actionPlan = m_boidsController.m_actionPlan;
+       // m_actionPlan = m_boidsController.m_actionPlan; // m_actionPlan is created in this script
 
         m_AnimationCycle = m_boidsController.m_AnimationCycle;
 
@@ -1589,7 +2079,7 @@ public class ActionPlanController : MonoBehaviour
         for (int i = 0; i < m_actionPlan.Count; i++)
         {
             // struct  KeyValuePair
-            KeyValuePair<string, List<SimpleBoidsTreeOfVoice.Action>> dictItem = m_actionPlan.ElementAt(i);
+            KeyValuePair<string, List<Action>> dictItem = m_actionPlan.ElementAt(i);
 
             // The first field (parameter name) on the ith line
             m_nameContainer[i] = new GameObject(dictItem.Key);          
@@ -1662,7 +2152,7 @@ public class ActionPlanController : MonoBehaviour
             m_textContainer[i] = new List<GameObject>();
             m_placeholderContainer[i] = new List<GameObject>();
             // struct  KeyValuePair
-            KeyValuePair<string, List<SimpleBoidsTreeOfVoice.Action>> dictItem = m_actionPlan.ElementAt(i);
+            KeyValuePair<string, List<Action>> dictItem = m_actionPlan.ElementAt(i);
 
 
             for (int j = 0; j < dictItem.Value.Count; j++)
@@ -1696,7 +2186,7 @@ public class ActionPlanController : MonoBehaviour
         for (int i = 0; i < m_actionPlan.Count; i++)
         {
 
-            KeyValuePair<string, List<SimpleBoidsTreeOfVoice.Action>> dictItem = m_actionPlan.ElementAt(i);
+            KeyValuePair<string, List<Action>> dictItem = m_actionPlan.ElementAt(i);
 
             m_currentLocalXPosition = 0; //// within the  ContentValues RectTransform 
 
@@ -2395,10 +2885,8 @@ public class ActionPlanController : MonoBehaviour
 
         loadButtonTextObj.GetComponent<Text>().text = loadButtonLablel;
 
-
-
-
-    }//   void Start()    
+               
+    }//   void SetupActionPlanGUI()    
 
 
 
@@ -2426,7 +2914,7 @@ public class ActionPlanController : MonoBehaviour
             // Add Inputfields to each key
             var item = m_actionPlan.ElementAt(i);
        
-            List<SimpleBoidsTreeOfVoice.Action> itemValue = item.Value;
+            List<ActionPlanController.Action> itemValue = item.Value;
 
 
             // Add UI components to the gameobjects just created

@@ -427,19 +427,19 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
     public void OnScroll(PointerEventData eventData)
     {
         Debug.Log("Scrolling");
-        onScroll.Invoke(eventData);// execute the event handler functions registered to the delegate onScroll ("event handler") by CommHub
+       // onScroll.Invoke(eventData);// execute the event handler functions registered to the delegate onScroll ("event handler") by CommHub
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         Debug.Log("Pointer Enter");
-        onPointerEnter.Invoke(eventData); // execute the event handler functions registered to the delegate  onPointerEnter ("event handler") by CommHub
+       // onPointerEnter.Invoke(eventData); // execute the event handler functions registered to the delegate  onPointerEnter ("event handler") by CommHub
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         Debug.Log("Pointer Exit");
-        onPointerExit.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerExit ("event handler") by CommHub
+       // onPointerExit.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerExit ("event handler") by CommHub
     }
 
 
@@ -447,21 +447,21 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
     public void OnPointerDown(PointerEventData eventData)
     {
         Debug.Log("Pointer Down");
-        onPointerDown.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerDown ("event handler") by CommHub
+       // onPointerDown.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerDown ("event handler") by CommHub
 
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         Debug.Log("Pointer Up");
-        onPointerUp.Invoke(eventData); // execute the event handler functions registered to the delegate    onPointerUp ("event handler") by CommHub
+       // onPointerUp.Invoke(eventData); // execute the event handler functions registered to the delegate    onPointerUp ("event handler") by CommHub
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
 
         Debug.Log("Pointer Cliks");
-        onPointerClick.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerClick ("event handler") by CommHub
+       // onPointerClick.Invoke(eventData);// execute the event handler functions registered to the delegate    onPointerClick ("event handler") by CommHub
 
     } //   public void OnPointerClick(PointerEventData eventData)
 
@@ -474,7 +474,7 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
         //pointerDrag, delta
 
         Debug.Log("Dragging starts");
-        onBeginDrag.Invoke(eventData); // execute the event handler functions registered to the delegate     onBeginDrag ("event handler") by CommHub
+       // onBeginDrag.Invoke(eventData); // execute the event handler functions registered to the delegate     onBeginDrag ("event handler") by CommHub
 
     }
 
@@ -482,7 +482,7 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
     public void OnDrag(PointerEventData eventData)
     {
         Debug.Log("Dragging");
-        onDrag.Invoke(eventData); // execute the event handler functions registered to the delegate     onDrag ("event handler") by CommHub
+       // onDrag.Invoke(eventData); // execute the event handler functions registered to the delegate     onDrag ("event handler") by CommHub
 
 
 
@@ -491,7 +491,7 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
     public void OnEndDrag(PointerEventData eventData)
     {
         Debug.Log("Dragging ended");
-        onEndDrag.Invoke(eventData);// execute the event handler functions registered to the delegate     onEndDrag ("event handler") by CommHub
+       // onEndDrag.Invoke(eventData);// execute the event handler functions registered to the delegate     onEndDrag ("event handler") by CommHub
 
 
     }

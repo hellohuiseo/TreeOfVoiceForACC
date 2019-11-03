@@ -254,7 +254,7 @@ public class DictManager: MonoBehaviour
     {
        // _LoadActionPlan(m_actionPlan, fileName);
     }
-     void _SaveActionPlan(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> myDict, string fileName)
+     void _SaveActionPlan(Dictionary<string, List<ActionPlanController.Action>> myDict, string fileName)
     {
         //string dictPath = UnityEngine.Application.dataPath + "/" + fileName;
 
@@ -271,7 +271,7 @@ public class DictManager: MonoBehaviour
     }
 
 
-    void _LoadActionPlan( Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> myDict, string fileName )
+    void _LoadActionPlan( Dictionary<string, List<ActionPlanController.Action>> myDict, string fileName )
     {
 
 

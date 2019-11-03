@@ -1,4 +1,5 @@
-﻿
+﻿//GITHUB: https://stackoverflow.com/questions/292357/what-is-the-difference-between-git-pull-and-git-fetch
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -83,16 +84,16 @@ public class CommHub : MonoBehaviour
   
     public ActionPlanFileManager  m_actionPlanFileManager;
 
-    public LEDColorGenController m_ledColorGenController;
+    public LEDColorGenController m_LEDColorGenController;
  
     public PointerEventsController m_pointerEventsController;
 
-    public IRSensorMasterController m_irSensorMasterController;
-    public LEDMasterController m_ledMasterController;
+    public IRSensorMasterController m_IRSensorMasterController;
+    public LEDMasterController m_LEDMasterController;
     public NeuroHeadSetController m_neuroHeadSetController;
 
 
-    Dictionary<String, List<SimpleBoidsTreeOfVoice.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
+    Dictionary<String, List<ActionPlanController.Action>> m_actionPlan; //// first defined in SimpleBoidsTreeOfVoice class
 
     List<GameObject>[] m_inputFieldContainer;
     
@@ -102,48 +103,37 @@ public class CommHub : MonoBehaviour
     public void Awake()
     {
 
-       
+        //It is assumed that all the necessary components are already attached to CommHub gameObject, which  is referred to by
+        // gameObject field of this object, the current instance of the current Class.
 
-        m_actionPlanController = gameObject.GetComponent<ActionPlanController>();
-        m_actionPlanUpdateController = gameObject.GetComponent<ActionPlanUpdateController>();
-        m_boidsController = gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
-       m_boidsRenderer = gameObject.GetComponent<BoidRendererTreeOfVoice>();
 
-        m_actionPlanFileManager= gameObject.GetComponent<ActionPlanFileManager>();
-        m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>(); // compute Shader use
+        m_actionPlanController = this.gameObject.GetComponent<ActionPlanController>();
+        m_actionPlanUpdateController = this.gameObject.GetComponent<ActionPlanUpdateController>();
+        m_boidsController =this. gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+       m_boidsRenderer = this.gameObject.GetComponent<BoidRendererTreeOfVoice>();
 
-        m_pointerEventsController = gameObject.GetComponent<PointerEventsController>();
+        m_actionPlanFileManager= this.gameObject.GetComponent<ActionPlanFileManager>();
+
+        //debugging
+        m_LEDColorGenController =this.gameObject.GetComponent<LEDColorGenController>(); // compute Shader use
+
+        if (m_LEDColorGenController == null)
+        {
+            Debug.LogError("The component LEDColorGenController  should be added to CommHub");
+            // Application.Quit();
+        }
+
+
+        m_pointerEventsController = this.gameObject.GetComponent<PointerEventsController>();
         // this  gets the reference  to the instance of  class PointerEventsController
         // The instance is automatically created (by new  PointerEventsController() ) when the component is added to the gameObject
         // The gameboject will has the reference to that instance.
 
-        m_irSensorMasterController = gameObject.GetComponent<IRSensorMasterController>();
-        m_ledMasterController = gameObject.GetComponent<LEDMasterController>();
-        m_neuroHeadSetController = gameObject.GetComponent<NeuroHeadSetController>();
-       
-     
+        m_IRSensorMasterController = this.gameObject.GetComponent<IRSensorMasterController>();
+        m_LEDMasterController = this.gameObject.GetComponent<LEDMasterController>();
+        m_neuroHeadSetController =this.gameObject.GetComponent<NeuroHeadSetController>();
 
-       
-
-       
-
-
-        //In Start(): call actionPlanController.InitActionPlan
-        //pointerEventController.onDrag += actionPlanController.ChangeActionTimes;
-        //pointerEventController.onDrag += actionPlanController.RedrawActionPlan ==> NO, NO: all drawings are controlled by the Renderer Components such as 
-        // CanvasRenderer and LineRenderer. All you need to change is to change the locations and properties of the gameobjects involved.
-        //pointerEventController.onPointerClick += actionPlanController.MergeOrSplitActionFields;; 
-        //                           two right mouse clicks merge or split the fields based on the position of the mouse within the field
-        //inputField.onEndEdit += actionPlanController.ChangeActionValues
-        //neuroHeadSetController.onReceived += boidsController.ChangeColorOfElectrodeBoids
-        //irsensorMasterController.onReceived += boidsController.ChangeBrightnessOfInnerCircleBoids;
-        // In Update call boidsController.SampleColorsAtLEDPoints
-        // In Update call ledMasterController.SendLEDData 
-        // uiMenuController.onLoadActionPlan += actionPlanController.LoadActionPlan
-        // uiMenuController.onSaveActionPlan += actionPlanController.SaveActionPlan
-
-
-
+      
     }
 
     
@@ -168,8 +158,11 @@ public class CommHub : MonoBehaviour
         //two right mouse clicks merge or split the fields based on the position of the mouse within the field
 
         // inputField.onEndEdit += actionPlanController.ChangeActionValues ==> This will be done within actionPlanController.initActionPlan
-        m_neuroHeadSetController.onAverageSignalReceived += m_ledColorGenController.UpdateLEDResponseParameter;
-        m_irSensorMasterController.onAverageSignalReceived += m_ledColorGenController.UpdateColorBrightnessParameter;
+
+        //https://forum.unity.com/threads/event-trouble-value-does-not-fall-within-the-expected-range.434455/
+        m_neuroHeadSetController.onAverageSignalReceived += m_LEDColorGenController.UpdateLEDResponseParameter;
+
+        m_IRSensorMasterController.onAverageSignalReceived += m_LEDColorGenController.UpdateColorBrightnessParameter;
 
         //In Update call  m_boidsController.SampleColorsAtLEDPoints
         //In Update call ledMasterController.SendLEDData
@@ -177,18 +170,9 @@ public class CommHub : MonoBehaviour
          m_actionPlanController.loadButton.onClick.AddListener(m_actionPlanFileManager.LoadActionPlan ) ;
 
          m_actionPlanController.saveButton.onClick.AddListener( m_actionPlanFileManager.SaveActionPlan) ;
-
-
-        m_ledColorGenController = gameObject.GetComponent<LEDColorGenController>();
-        //It is assumed that all the necessary components are already attached to CommHub gameObject, which  is referred to by
-        // gameObject field variable. gameObject.GetComponent<LEDColorGenController>() == this.gameObject.GetComponent<LEDColorGenController>();
-        if (m_ledColorGenController == null)
-        {
-            Debug.LogError("The global Variable  m_ledColorGenController is not  defined");
-           // Application.Quit();
-        }
-
-        m_ledColorGenController.m_ledSenderHandler += m_ledMasterController.UpdateLEDArray;
+                   
+        //debugging
+        m_LEDColorGenController.m_LEDSenderHandler += m_LEDMasterController.UpdateLEDArray;
 
 
         // Define Event Handlers for InputField Event          
@@ -197,7 +181,7 @@ public class CommHub : MonoBehaviour
         {
 
 
-            KeyValuePair<string, List<SimpleBoidsTreeOfVoice.Action>> dictItem = m_actionPlan.ElementAt(i);
+            KeyValuePair<string, List<ActionPlanController.Action>> dictItem = m_actionPlan.ElementAt(i);
 
 
             for (int j = 0; j < dictItem.Value.Count; j++)
@@ -299,7 +283,7 @@ public class CommHub : MonoBehaviour
    
     
 
-    void OnValueInput(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action> > actionPlan, 
+    void OnValueInput(Dictionary<string, List<ActionPlanController.Action> > actionPlan, 
                     string key, int indexToTimedAction, InputField inputField )
       
      {
@@ -359,7 +343,7 @@ public class CommHub : MonoBehaviour
 
     //https://forum.unity.com/threads/cant-change-caret-position.431105/
 
-    void OnValueChanged(Dictionary<string, List<SimpleBoidsTreeOfVoice.Action>> actionPlan,
+    void OnValueChanged(Dictionary<string, List<ActionPlanController.Action>> actionPlan,
                     string key, int indexToTimedAction, InputField inputField)
 
     {

@@ -31,8 +31,8 @@ int ss4 = 47;
 // A total num of LED = 200; each slave processes 40 LEDs
 const int NumPixels1 = 40;
 const int NumPixles2 = 40;
-const int NumPixels3 = 40;
-const int NumPixels4 = 40;
+const int NumPixels3 = 60;
+const int NumPixels4 = 60;
 
 const int group1ByteSize = NumPixels1 * 3;
 const int group2ByteSize = NumPixles2 * 3;

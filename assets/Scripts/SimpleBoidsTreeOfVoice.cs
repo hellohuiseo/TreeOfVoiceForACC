@@ -48,7 +48,7 @@ using Random = UnityEngine.Random;
 public class SimpleBoidsTreeOfVoice : MonoBehaviour
 {
 
-
+    ActionPlanController m_actionPlanController; 
 
     const int BLOCK_SIZE = 1024; // The number of threads in a single thread group
 
@@ -79,17 +79,11 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
 
     // 보이드의 수
-    public float m_BoidsNum = 3000f;
+    [Range(1000, 10000)]
+    public float m_BoidsNum = 5000f;
 
-    private float BoidsNumPrev = 1000f;
 
-    // 보이드를 생성하는 공간의 크기
-    [Range(0.0f, 10.0f)]
-    [SerializeField] protected float MinDomainRadius = 2.0f;
-
-    [Range(0.0f, 10.0f)]
-    [SerializeField] protected float MaxDomainRadius = 10.0f;
-
+    
     [Range(0.0f, 1.0f)]
     [SerializeField] protected float MinBoidRadius = 0.1f;
     [Range(0.0f, 1.0f)]
@@ -216,7 +210,9 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
     public float GroundRadius = 12f;
     public float CeilingRadius = 12f;
-    public float CeilingInnerRadius = 1f;
+    // public float CeilingInnerRadius = 0.7f;
+
+    public float CeilingInnerRadius = 0.3f;
 
     public int numOfWalls = 2; // ground, ceiling, front wall
 
@@ -226,17 +222,17 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
     // 컴퓨트 쉐이더
     // Mention another Component instance.
-    [SerializeField] protected ComputeShader BoidComputeShader;
+    [SerializeField] protected ComputeShader m_BoidComputeShader; // set in the inspector
 
     //https://www.reddit.com/r/Unity3D/comments/7ppldz/physics_simulation_on_gpu_with_compute_shader_in/
     // 보이드의 버퍼
-    public ComputeBuffer BoidBuffer { get; protected set; } // null reference
+    public ComputeBuffer m_BoidBuffer { get; protected set; } // null reference
 
-    public ComputeBuffer BoidCountBuffer { get; protected set; } // null reference
+    public ComputeBuffer m_BoidCountBuffer { get; protected set; } // null reference
 
-    int BufferStartIndex, BufferEndIndex;
+    int m_BufferStartIndex, m_BufferEndIndex;
 
-    protected int KernelIdGround, KernelIdCeiling, KernelIdCountBoids;
+    protected int m_KernelIdGround, m_KernelIdCeiling, m_KernelIdCountBoids;
 
 
     public BoidData[] m_boidArray;
@@ -284,14 +280,14 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
     private bool IsBoidsNumSet = false;
 
-    public class Action
-    {
+    //public class Action
+    //{
 
-        public List<float> T;
-        public float V;
+    //    public List<float> T;
+    //    public float V;
 
 
-    }
+    //}
 
     List<string> m_actionKeys;
     int m_threadGroupSize;
@@ -303,7 +299,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
     //public bool Remove(T item);
     // public void RemoveAt(int index);
 
-    public Dictionary<String, List<Action>> m_actionPlan;
+    public Dictionary<String, List<ActionPlanController.Action>> m_actionPlan;
 
     public struct BoidData
     {
@@ -317,6 +313,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         public float Speed;            // the speed of a boid
 
         public float Radius; // the radius of the circle boid
+        public Vector3 ColorHSV;
         public Vector4 Color;         // RGBA color
         public Vector2 SoundGrain; // soundGrain = (freq, amp)
         public float Duration;     // duration of a boid each frame
@@ -501,134 +498,97 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (BoidBuffer == null) return;
-        BoidBuffer.Release();
-        BoidBuffer = null;
+        if (m_BoidBuffer == null) return;
+        m_BoidBuffer.Release();
+        m_BoidBuffer = null;
     }
 
-    void OnValidate() // called before the start() 
-    {
 
-        if (!IsBoidsNumSet) return; // IsBoidsNumSet is set to true in Start()
-
-
-        Debug.Log("MyComponent::OnValidate()");
-
-        Assert.IsTrue(m_BoidsNum < MAX_SIZE_OF_BUFFER, "Assertion failed :( :(");
-
-        if (m_BoidsNum < BoidsNumPrev) // the current boids less than the previous
-        {
-            //add random boids to the at the of the buffer
-            BufferEndIndex = (int)m_BoidsNum;
-            BoidsNumPrev = (int)m_BoidsNum;
-        }
-
-        else
-        if (m_BoidsNum > BoidsNumPrev)
-
-        {  //add random boids to the at the of the buffer
-
-            float numOfBoidsToAdd = m_BoidsNum - BoidsNumPrev;
-
-            SetBoidArray(BufferEndIndex, (int)numOfBoidsToAdd);
-
-            BufferEndIndex = (int)m_BoidsNum;
-            BoidsNumPrev = (int)m_BoidsNum;
-
-            BoidBuffer.SetData( m_boidArray); // buffer is R or RW
-
-        }
-
-
-
-    } // OnValidate()
 
     //public static Color HSVToRGB(float H, float S, float V);
     protected void InitializeValues()
     {
      
-        IsBoidsNumSet = true;
+        IsBoidsNumSet = true;         
 
-        BoidsNumPrev = (int)m_BoidsNum;
-
-        BufferEndIndex = (int)m_BoidsNum;
+        m_BufferEndIndex = (int)m_BoidsNum;
 
 
-        BoidComputeShader.SetInt("_BoidsNum", (int)m_BoidsNum);
-        BoidComputeShader.SetInt("_NumOfWalls", numOfWalls);
+        m_BoidComputeShader.SetInt("_BoidsNum", (int)m_BoidsNum);
+        m_BoidComputeShader.SetInt("_NumOfWalls", numOfWalls);
 
 
         //BoidComputeShader.SetFloat("_Mass", _mass);
                      
-        BoidComputeShader.SetFloat("_SeparateRadius", _separate.Radius);
-        BoidComputeShader.SetFloat("_SeparateWeight", _separate.Weight);
-        BoidComputeShader.SetFloat("_AlignmentRadius", _alignment.Radius);
-        BoidComputeShader.SetFloat("_AlignmentWeight", _alignment.Weight);
-        BoidComputeShader.SetFloat("_CohesionRadius", _cohesion.Radius);
-        BoidComputeShader.SetFloat("_CohesionWeight", _cohesion.Weight);
+        m_BoidComputeShader.SetFloat("_SeparateRadius", _separate.Radius);
+        m_BoidComputeShader.SetFloat("_SeparateWeight", _separate.Weight);
+        m_BoidComputeShader.SetFloat("_AlignmentRadius", _alignment.Radius);
+        m_BoidComputeShader.SetFloat("_AlignmentWeight", _alignment.Weight);
+        m_BoidComputeShader.SetFloat("_CohesionRadius", _cohesion.Radius);
+        m_BoidComputeShader.SetFloat("_CohesionWeight", _cohesion.Weight);
 
 
-        BoidComputeShader.SetFloat("_MinSpeed", _minSpeed);
-        BoidComputeShader.SetFloat("_MaxSpeed", _maxSpeed);
+        m_BoidComputeShader.SetFloat("_MinSpeed", _minSpeed);
+        m_BoidComputeShader.SetFloat("_MaxSpeed", _maxSpeed);
 
-        BoidComputeShader.SetFloat("_SpeedFactor", _speedFactor);
-        BoidComputeShader.SetFloat("_ScaleFactor", _scaleFactor);
+        m_BoidComputeShader.SetFloat("_SpeedFactor", _speedFactor);
+        m_BoidComputeShader.SetFloat("_ScaleFactor", _scaleFactor);
 
-        BoidComputeShader.SetFloat("_GroundFlockingWeight", _groundWeight.FlockingWeight);
-        BoidComputeShader.SetFloat("_GroundDivergeWeight", _groundWeight.DivergeWeight);
-        BoidComputeShader.SetFloat("_GroundCirculationWeight", _groundWeight.CirculationWeight);
+        m_BoidComputeShader.SetFloat("_GroundFlockingWeight", _groundWeight.FlockingWeight);
+        m_BoidComputeShader.SetFloat("_GroundDivergeWeight", _groundWeight.DivergeWeight);
+        m_BoidComputeShader.SetFloat("_GroundCirculationWeight", _groundWeight.CirculationWeight);
 
-        BoidComputeShader.SetFloat("_CeilingFlockingWeight", _ceilingWeight.FlockingWeight);
-        BoidComputeShader.SetFloat("_CeilingConvergeWeight", _ceilingWeight.ConvergeWeight);
-        BoidComputeShader.SetFloat("_CeilingCirculationWeight", _ceilingWeight.CirculationWeight);
-
-
-
-        BoidComputeShader.SetFloat("_GroundMinHue", _groundMinHue);
-        BoidComputeShader.SetFloat("_GroundMaxHue", _groundMaxHue);
-        BoidComputeShader.SetFloat("_GroundMinSaturation", _groundMinSaturation);
-        BoidComputeShader.SetFloat("_GroundMaxSaturation", _groundMaxSaturation);
-        BoidComputeShader.SetFloat("_GroundMinValue", _groundMinValue);
-        BoidComputeShader.SetFloat("_GroundMaxValue", _groundMaxValue);
-
-        BoidComputeShader.SetFloat("_GroundMinAlpha", _groundMinAlpha);
-        BoidComputeShader.SetFloat("_GroundMaxAlpha", _groundMaxAlpha);
+        m_BoidComputeShader.SetFloat("_CeilingFlockingWeight", _ceilingWeight.FlockingWeight);
+        m_BoidComputeShader.SetFloat("_CeilingConvergeWeight", _ceilingWeight.ConvergeWeight);
+        m_BoidComputeShader.SetFloat("_CeilingCirculationWeight", _ceilingWeight.CirculationWeight);
 
 
 
-        BoidComputeShader.SetFloat("_CeilingMinHue", _ceilingMinHue);
-        BoidComputeShader.SetFloat("_CeilingMaxHue", _ceilingMaxHue);
-        BoidComputeShader.SetFloat("_CeilingMinSaturation", _ceilingMinSaturation);
-        BoidComputeShader.SetFloat("_CeilingMaxSaturation", _ceilingMaxSaturation);
-        BoidComputeShader.SetFloat("_CeilingMinValue", _ceilingMinValue);
-        BoidComputeShader.SetFloat("_CeilingMaxValue", _ceilingMaxValue);
+        m_BoidComputeShader.SetFloat("_GroundMinHue", _groundMinHue);
+        m_BoidComputeShader.SetFloat("_GroundMaxHue", _groundMaxHue);
+        m_BoidComputeShader.SetFloat("_GroundMinSaturation", _groundMinSaturation);
+        m_BoidComputeShader.SetFloat("_GroundMaxSaturation", _groundMaxSaturation);
+        m_BoidComputeShader.SetFloat("_GroundMinValue", _groundMinValue);
+        m_BoidComputeShader.SetFloat("_GroundMaxValue", _groundMaxValue);
 
-        BoidComputeShader.SetFloat("_CeilingMinAlpha", _ceilingMinAlpha);
-        BoidComputeShader.SetFloat("_CeilingMaxAlpha", _ceilingMaxAlpha);
-
-
-        BoidComputeShader.SetVector("_GroundMaxCorner", GroundMaxCorner);
-        BoidComputeShader.SetVector("_GroundMinCorner", GroundMinCorner);
-
-
-        BoidComputeShader.SetVector("_CeilingMaxCorner", CeilingMaxCorner);
-        BoidComputeShader.SetVector("_CeilingMinCorner", CeilingMinCorner);
+        m_BoidComputeShader.SetFloat("_GroundMinAlpha", _groundMinAlpha);
+        m_BoidComputeShader.SetFloat("_GroundMaxAlpha", _groundMaxAlpha);
 
 
 
-        BoidComputeShader.SetFloat("_GroundPlaneDepth", GroundPlaneDepth);
-        BoidComputeShader.SetFloat("_CeilingPlaneDepth", CeilingPlaneDepth);
+        m_BoidComputeShader.SetFloat("_CeilingMinHue", _ceilingMinHue);
+        m_BoidComputeShader.SetFloat("_CeilingMaxHue", _ceilingMaxHue);
+        m_BoidComputeShader.SetFloat("_CeilingMinSaturation", _ceilingMinSaturation);
+        m_BoidComputeShader.SetFloat("_CeilingMaxSaturation", _ceilingMaxSaturation);
+        m_BoidComputeShader.SetFloat("_CeilingMinValue", _ceilingMinValue);
+        m_BoidComputeShader.SetFloat("_CeilingMaxValue", _ceilingMaxValue);
+
+        m_BoidComputeShader.SetFloat("_CeilingMinAlpha", _ceilingMinAlpha);
+        m_BoidComputeShader.SetFloat("_CeilingMaxAlpha", _ceilingMaxAlpha);
 
 
-        BoidComputeShader.SetFloat("_GroundRadius", GroundRadius);
-        BoidComputeShader.SetFloat("_CeilinRadius", CeilingRadius);
+        m_BoidComputeShader.SetVector("_GroundMaxCorner", GroundMaxCorner);
+        m_BoidComputeShader.SetVector("_GroundMinCorner", GroundMinCorner);
 
-        BoidComputeShader.SetFloat("_CeilingInnerRadius", CeilingInnerRadius);
 
-        KernelIdGround = BoidComputeShader.FindKernel("SimulateCSGround");
-        KernelIdCeiling = BoidComputeShader.FindKernel("SimulateCSCeiling");
+        m_BoidComputeShader.SetVector("_CeilingMaxCorner", CeilingMaxCorner);
+        m_BoidComputeShader.SetVector("_CeilingMinCorner", CeilingMinCorner);
 
-        KernelIdCountBoids = BoidComputeShader.FindKernel("SimulateCSCountBoids");
+
+
+        m_BoidComputeShader.SetFloat("_GroundPlaneDepth", GroundPlaneDepth);
+        m_BoidComputeShader.SetFloat("_CeilingPlaneDepth", CeilingPlaneDepth);
+
+
+        m_BoidComputeShader.SetFloat("_GroundRadius", GroundRadius);
+        m_BoidComputeShader.SetFloat("_CeilinRadius", CeilingRadius);
+
+        m_BoidComputeShader.SetFloat("_CeilingInnerRadius", CeilingInnerRadius);
+
+        m_KernelIdGround = m_BoidComputeShader.FindKernel("SimulateCSGround");
+        m_KernelIdCeiling = m_BoidComputeShader.FindKernel("SimulateCSCeiling");
+
+        m_KernelIdCountBoids = m_BoidComputeShader.FindKernel("SimulateCSCountBoids");
     } //nitializeValues()
 
 
@@ -665,9 +625,9 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         //Also by checking the decompiled file of Vector3 on github, I confirmed that Vector3 indeed only consists of 3 floats
 
 
-        BoidCountBuffer = new ComputeBuffer(numOfWalls, Marshal.SizeOf(typeof(int)));
+        m_BoidCountBuffer = new ComputeBuffer(numOfWalls, Marshal.SizeOf(typeof(int)));
 
-        BoidBuffer = new ComputeBuffer(MAX_SIZE_OF_BUFFER, Marshal.SizeOf(typeof(BoidData)));
+        m_BoidBuffer = new ComputeBuffer(MAX_SIZE_OF_BUFFER, Marshal.SizeOf(typeof(BoidData)));
 
         m_boidArray = new BoidData[MAX_SIZE_OF_BUFFER];
         boidCountArray = new int[numOfWalls]; // array of nulls
@@ -681,7 +641,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         }
 
         //var boidArray = new BoidData[BoidsNum];
-        SetBoidArray(0, (int)m_BoidsNum);
+        SetBoidArray(m_boidArray,(int)m_BoidsNum);
 
 
         // for debugging
@@ -706,24 +666,24 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         // For the part of boidArray that is set by data are filled by null. 
         // When the array boidArray is created each element is set by null.
 
-        BoidBuffer.SetData(m_boidArray); // buffer is R or RW
-        BoidCountBuffer.SetData(boidCountArray); // buffer is R or RW
+        m_BoidBuffer.SetData(m_boidArray); // buffer is R or RW
+        m_BoidCountBuffer.SetData(boidCountArray); // buffer is R or RW
 
-        BoidComputeShader.SetBuffer(KernelIdGround, "_BoidBuffer", BoidBuffer);
-        //BoidComputeShader.SetBuffer(KernelIdGround, "_BoidCountBuffer", BoidCountBuffer);
-        BoidComputeShader.SetBuffer(KernelIdCeiling, "_BoidBuffer", BoidBuffer);
-        //BoidComputeShader.SetBuffer(KernelIdCeiling, "_BoidCountBuffer", BoidCountBuffer);
+        m_BoidComputeShader.SetBuffer(m_KernelIdGround, "_BoidBuffer", m_BoidBuffer);
+     
+        m_BoidComputeShader.SetBuffer(m_KernelIdCeiling, "_BoidBuffer", m_BoidBuffer);
+     
 
 
-        BoidComputeShader.SetBuffer(KernelIdCountBoids, "_BoidCountBuffer", BoidCountBuffer);
-        BoidComputeShader.SetBuffer(KernelIdCountBoids, "_BoidBuffer", BoidBuffer);
+        m_BoidComputeShader.SetBuffer(m_KernelIdCountBoids, "_BoidCountBuffer", m_BoidCountBuffer);
+        m_BoidComputeShader.SetBuffer(m_KernelIdCountBoids, "_BoidBuffer", m_BoidBuffer);
 
     } // InitializeBuffers()
 
 
 
 
-    protected void SetBoidArray(int startIndex, int numberOfElements)
+    protected void SetBoidArray(BoidData[] m_boidArray, int numberOfElements)
     {
 
 
@@ -733,7 +693,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         Vector2 initSoundGrain;
         int wallNo;
 
-        for (int i = startIndex; i < numberOfElements; i++)
+        for (int i=0; i < numberOfElements; i++)
         {
             // set the head direction of the boid
 
@@ -771,7 +731,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
 
 
-            initRadiusX = Random.Range(MinBoidRadius, MaxBoidRadius);
+            initRadiusX = Random.Range(MinBoidRadius, MaxBoidRadius); // 0.1 ~ 0.3
             initRadiusY = Random.Range(MinBoidRadius, MaxBoidRadius);
             initRadiusZ = Random.Range(MinBoidRadius, MaxBoidRadius);
 
@@ -859,7 +819,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
             } // if
 
 
-        } // for  (int i = startIndex; i < numberOfElements; i++)
+        } // for  (int i = 0; i < numberOfElements; i++)
 
 
     } // SetBoidArray()
@@ -878,7 +838,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         //Debug.Log("DeltaT=");
         //Debug.Log(deltaT);
 
-        List<Action> timedActions = m_actionPlan[name];
+        List<ActionPlanController.Action> timedActions = m_actionPlan[name];
 
         if ( deltaT >= m_AnimationCycle)
         {
@@ -936,464 +896,12 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
     private void Awake()
     {
 
-        //Initialize me:
+        m_actionPlanController = this.gameObject.GetComponent<ActionPlanController>();
 
-        m_actionPlan = new Dictionary<String, List<Action>>()
+        if ( m_actionPlanController is null)
         {
-
-             //{ "_BoidsNum", new List<Action> {   new Action() { T = new List<float> {0, 390 },
-             //                                                   V = 1500 },
-             //                                 }
-             //},
-
-              { "_SpeedFactor", new List<Action> { new Action() { T =new List<float>{ 0, 30}, V  = 0.3f  },
-                                                    new Action() { T = new List<float>{30, 140 }, V = 0.5f},
-
-                                                 new Action() { T = new List<float>{140, 200 }, V =0.3f },
-                                                new Action() { T = new List<float>{200, 390 }, V =0.5f  },
-
-                                                 }
-             },
-
-              { "_ScaleFactor", new List<Action> {  new Action() { T  = new List<float>{0,  390 },  V =1f },
-
-                                                  }
-             },
-
-              { "_SeparateRadius", new List<Action> {   new Action() { T=new List<float> {0, 30 }, V= 2f },
-
-                                                    new Action() { T = new List<float>{30, 60 }, V = 0.5f },
-                                                        new Action() { T = new List<float>{60, 100 }, V = 0.9f },
-                                                            new Action() { T = new List<float>{100, 140 }, V = 1.2f  },
-
-                                                new Action() { T = new List<float>{140,  230 }, V =4.4f},
-                                                 new Action() { T= new List<float>{230, 260 }, V = 0.5f},
-                                                  new Action() { T = new List<float>{260,  300 }, V = 4.4f },
-
-                                                new Action() { T =new List<float> {300, 360 }, V =2f  },
-                                                    new Action() { T = new List<float>{360, 390 }, V = 0.5f  },
-
-
-                                               }
-             },
-
-              { "_SeparateWeight", new List<Action> {  new Action() { T=new List<float> {0, 30 }, V = 0.43f },
-
-                                                    new Action() { T =new List<float> {30, 60 }, V = 0.1f },
-                                                        new Action() { T =new List<float>{ 60, 100 }, V = 0.3f},
-                                                            new Action() { T =new List<float>{ 100, 140 }, V =0.2f },
-
-                                                    new Action() { T = new List<float>{140, 230 }, V = 0.3f },
-                                                            new Action() { T =new List<float>{ 230, 260 },  V =0.1f },
-                                                                new Action() { T =new List<float> {260, 300 }, V = 0.3f },
-
-                                                    new Action() { T =new List<float> {300, 360 }, V = 0.1f  },
-                                                        new Action() { T = new List<float>{360, 390 }, V = 0.8f },
-
-                                               }
-             },
-
-              { "_AlignmentRadius", new List<Action> {  new Action() { T =new List<float> {0, 30 }, V = 2f},
-
-                                                    new Action() { T= new List<float>{30, 60 }, V= 2.8f },
-                                                        new Action() { T= new List<float>{60, 100 }, V = 3.5f },
-                                                            new Action() { T = new List<float>{100, 140 }, V = 1.7f},
-
-                                                    new Action() { T =new List<float>{ 140, 200 }, V = 1.8f },
-
-                                                        new Action() { T = new List<float>{200, 230 }, V = 3.2f},
-                                                            new Action() { T = new List<float>{230, 260 }, V =2.8f },
-                                                                new Action() { T =new List<float>{ 260, 300 }, V = 1.8f  },
-
-                                                    new Action() { T = new List<float>{300, 360 }, V =4.0f},
-                                                        new Action() { T = new List<float>{360, 390 }, V =2.1f },
-
-                                               }
-             },
-
-              { "_AlignmentWeight", new List<Action> {  new Action() { T = new List<float>{0, 30 }, V =  0.3f },
-
-                                                    new Action() { T =  new List<float>{30, 60 }, V =  0.6f  },
-                                                        new Action() { T =  new List<float>{60, 140 }, V=  0.3f},
-
-                                                    new Action() { T =  new List<float>{140, 230 }, V= 0.1f  },
-
-                                                            new Action() { T =  new List<float>{230, 260 }, V = 0.6f },
-                                                                new Action() { T =  new List<float>{260, 300 }, V = 0.8f },
-
-                                                    new Action() { T =  new List<float>{300, 360 }, V =  0.8f },
-                                                        new Action() { T =  new List<float>{360, 390 }, V = 0.6f },
-
-
-                                               }
-             },
-
-              { "_CohesionRadius", new List<Action> {  new Action() { T =  new List<float>{0, 30 }, V = 0.2f },
-
-                                                        new Action() { T= new List<float>{30, 60 }, V= 1.2f },
-                                                            new Action() {T= new List<float>{60, 140 }, V = 0.1f },
-
-                                                    new Action() { T =  new List<float>{140, 230 }, V =  2.9f  },
-                                                     new Action() { T =  new List<float>{230, 300 }, V =  1.1f },
-                                                   new Action() { T =  new List<float>{300, 360 }, V =  2f },
-                                                        new Action() { T = new List<float>{ 360, 390 }, V = 1.1f},
-
-
-
-                                               }
-             },
-
-              { "_CohesionWeight", new List<Action> {
-
-                  new Action() { T  = new List<float>{ 0, 30 }, V = 0.2f },
-
-                    new Action() { T= new List<float> {30, 60 }, V = 0.02f },
-                        new Action() { T=  new List<float>{60, 100 }, V = 0.4f },
-                            new Action() { T =  new List<float>{100,140 },  V = 0.1f },
-
-                new Action() { T =  new List<float>{140, 230 }, V = 0.4f },
-                         new Action() { T=  new List<float>{230, 260 }, V = 0.1f },
-                            new Action() { T =  new List<float>{260,300 }, V =  0.7f  },
-
-                new Action() { T=  new List<float>{300, 360 }, V = 0.2f },
-                    new Action() { T=  new List<float>{360, 390 }, V = 0.1f },
-
-                                               }
-             },
-
-
-
-            //
-            { "_GroundFlockingWeight", new List<Action> {
-
-                new Action() { T = new List<float>{ 0, 30 }, V = 0.3f },
-
-                    new Action() { T =  new List<float>{30, 60 }, V = 0.5f },
-                        new Action() { T = new List<float>{ 60, 100 }, V = 1.4f},
-                            new Action() { T= new List<float> {100,140 }, V=  0.4f},
-
-                new Action() { T = new List<float> {140,200 }, V =  0.2f },
-
-                    new Action() { T =  new List<float>{200,230 }, V =  1.9f },
-                        new Action() { T =  new List<float>{230, 260 },  V = 0.5f },
-                            new Action() { T = new List<float>{ 260, 300 }, V =  1.8f },
-
-                new Action() { T=  new List<float>{300,360 },  V =  0.3f },
-                    new Action() { T=  new List<float>{360, 390 }, V = 0.5f  },
-
-                                               }
-             },
-
-            { "_GroundDivergeWeight", new List<Action> {
-
-                new Action() { T = new List<float>{ 0,30 },  V =  0.2f  },
-
-                    new Action() { T =  new List<float>{30,60 },  V = 0.5f },
-                        new Action() { T= new List<float>{ 60,100 }, V =  0.5f },
-                            new Action() { T =  new List<float>{100,140 },  V = 0.5f },
-
-                new Action() { T =  new List<float>{140, 200},  V = 0.3f  },
-
-                    new Action() { T =  new List<float>{200,230 },  V = 0.7f },
-                        new Action() { T=  new List<float>{230,260 }, V =  0.1f },
-                            new Action() { T =  new List<float>{260,300 },  V = 0.1f },
-
-                new Action() { T =  new List<float>{300, 360 }, V =   0.7f },
-                    new Action() { T =  new List<float>{360, 390 }, V =0.1f },
-
-                                               }
-             },
-
-            { "_GroundCirculationWeight", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 30 },  V = 0.5f },
-
-                    new Action() { T =  new List<float>{30,60 },  V = 0.2f  },
-                        new Action() { T =  new List<float>{60, 100 },  V = 0.3f },
-                            new Action() { T =  new List<float>{100, 140 }, V = 0.3f  },
-                new Action() { T =  new List<float>{140,200 },  V =  0.5f  },
-                    new Action() { T=  new List<float>{200, 230 },  V = 0.3f  },
-                        new Action() { T = new List<float> {230, 260 },  V = 0.2f  },
-                            new Action() { T=  new List<float>{260,300 },  V = 0.3f },
-
-                new Action() { T = new List<float> {300, 360 }, V =0.1f  },
-                    new Action() { T=  new List<float>{360, 390 }, V = 0.2f},
-
-                                               }
-             },
-
-
-            { "_CeilingFlockingWeight", new List<Action> {
-
-                new Action() { T = new List<float> {0, 30 }, V = 0.2f },
-
-                    new Action() { T =  new List<float>{30,60 }, V = 3.4f },
-                        new Action() { T =  new List<float>{60, 100 }, V =  4.8f  },
-                            new Action() { T =  new List<float>{100, 140 }, V = 1.0f   },
-
-                new Action() { T =  new List<float>{ 140, 200 },  V=  3.0f   },
-                    new Action() { T =  new List<float>{200, 230 }, V =  3.9f   },
-                        new Action() { T = new List<float> {230,260 }, V = 1.2f },
-                            new Action() { T=  new List<float>{260, 300 }, V =  1.0f },
-
-                new Action() { T = new List<float> {300, 360 }, V = 0.2f },
-                    new Action() { T=  new List<float>{360, 390 }, V = 1.2f  },
-
-
-
-                                               }
-             },
-
-            { "_CeilingConvergeWeight", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 30 },  V = 0.3f  },
-
-                    new Action() { T= new List<float> {30, 60 }, V =  0.5f   },
-                        new Action() { T =  new List<float>{60, 140 },  V = 0.5f   },
-
-
-                 new Action() { T = new List<float>{ 140, 200 }, V = 0.3f  },
-                    new Action() { T = new List<float> {200, 230 },  V =  0.6f  },
-                        new Action() { T=  new List<float>{230, 260 },  V =  0.3f },
-                            new Action() { T=  new List<float>{260,300 },  V = 0.1f },
-
-                new Action() { T = new List<float> {300, 360 }, V = 0.3f },
-                    new Action() { T = new List<float> {360, 390 }, V = 0.3f },
-
-
-                                               }
-             },
-
-            { "_CeilingCirculationWeight", new List<Action> {
-
-                new Action() { T=  new List<float>{0, 30},  V =  0.5f   },
-
-                    new Action() { T =  new List<float>{30, 60 }, V = 0.2f  },
-                        new Action() { T = new List<float> {60, 100 }, V =  0.3f },
-                            new Action() { T=  new List<float>{100f,140 },  V = 0.2f },
-
-                new Action() { T=  new List<float>{140, 200 },  V =0.5f },
-
-                    new Action() { T=  new List<float>{200,230 },  V =0.1f },
-                        new Action() { T = new List<float> {230f,260 },  V = 0.1f },
-                            new Action() { T = new List<float> {260, 300 }, V =0.2f  },
-
-                new Action() { T =  new List<float>{300, 360 }, V =  0.5f },
-                    new Action() { T =  new List<float>{360,390 }, V =   0.1f  },
-
-                                               }
-             },
-
-
-
-
-            //
-            { "_GroundMinHue", new List<Action> {
-
-                new Action() { T = new List<float>{ 0, 60 }, V =  1f},
-                       new Action() { T =  new List<float>{60,100 },  V = -0.1f},
-                            new Action() { T =  new List<float>{100, 140 }, V = 0.1f },
-
-                new Action() { T =  new List<float>{140,200 }, V =  0.6f },
-
-                    new Action() { T =  new List<float>{200,300 },  V = 0.47f },
-                      new Action() { T=  new List<float>{300, 360 }, V = -0.3f},
-                    new Action() { T =  new List<float>{360, 390 }, V = 0.8f },
-
-
-                                               }
-             },
-
-            { "_GroundMaxHue", new List<Action> {
-
-                new Action() { T = new List<float> {0, 60}, V = 0.7f },
-                    new Action() { T = new List<float> {60,100 },  V = 0.3f},
-                         new Action() { T = new List<float> {100,140 },  V = 0.3f },
-
-                new Action() { T = new List<float> {140,200},  V =0.5f  },
-
-                    new Action() { T =  new List<float>{200, 230 }, V = 0.6f  },
-                        new Action() { T=  new List<float>{230, 300 }, V =  1.0f },
-
-                new Action() { T =  new List<float>{300, 360 },  V =0.1f },
-                    new Action() { T =  new List<float>{360, 390 },  V = 1.0f },
-
-                                               }
-             },
-
-            { "_GroundMinSaturation", new List<Action> {
-
-                new Action() { T =  new List<float>{ 0, 140 }, V = 0f },
-                    new Action() { T =  new List<float>{140,200 },  V = 1f },
-
-                    new Action() { T =  new List<float>{200, 230 }, V = 0.8f },
-                        new Action() { T =  new List<float>{230, 300 }, V = 1.0f   },
-
-                new Action() { T =  new List<float>{300, 360 },  V =  0.2f },
-                    new Action() { T =  new List<float>{360,390 }, V =  0f },
-
-                                               }
-             },
-
-            { "_GroundMaxSaturation", new List<Action> {
-
-                new Action() { T =  new List<float>{0,140 },  V =  0.7f },
-
-                new Action() { T =  new List<float>{140,230 },  V =  0.1f },
-                       new Action() { T = new List<float> {230, 300 },  V =1.0f },
-
-                new Action() { T = new List<float> {300, 360 }, V = 0.8f  },
-                    new Action() { T =  new List<float>{360, 390 }, V = 0.7f},
-
-                                               }
-             },
-
-            { "_GroundMinValue", new List<Action> {
-
-                new Action() { T = new List<float> {0,140 }, V =1f},
-
-                new Action() { T=  new List<float>{140,230 },  V =  0.8f },
-
-                new Action() { T =  new List<float>{230, 360 }, V = 0.7f },
-                    new Action() { T =  new List<float>{360,390 }, V = 1f },
-
-                                               }
-             },
-
-            { "_GroundMaxValue", new List<Action> {
-
-                                     new Action() { T =  new List<float>{0,390 },  V =  1f },
-                                 }
-             },
-
-        { "_GroundMinAlpha", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 140 }, V = 0.2f },
-
-                new Action() { T =  new List<float>{140,230 }, V=  0.3f },
-                    new Action() { T = new List<float>{230, 300 },  V =1.0f},
-
-                new Action() { T =  new List<float>{300, 390 }, V =   0.2f },
-
-                                               }
-             },
-
-            { "_GroundMaxAlpha", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 140 }, V =  0.8f },
-
-                new Action() { T = new List<float> {140,230 }, V =  0.9f  },
-                    new Action() { T =  new List<float>{230, 300 }, V = 1.0f},
-
-                new Action() { T =  new List<float>{300, 360 }, V=   0.4f},
-                    new Action() { T=  new List<float>{360, 390 },  V =  0.8f },
-
-
-                                               }
-             },
-                                                  
-
-
-            //
-            { "_CeilingMinHue", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 30 }, V =  -0.1f },
-
-                    new Action() { T =  new List<float>{30, 60 }, V = 0.7f } ,
-                        new Action() { T =  new List<float>{60, 100 }, V =  0.5f },
-                            new Action() { T =  new List<float>{100, 140 }, V =0.9f },
-
-                new Action() { T =  new List<float>{140, 230 }, V = 0.07f },
-                         new Action() { T =  new List<float>{230,300 },  V = 1.0f },
-
-                new Action() { T=  new List<float>{300, 360 }, V=  0.8f },
-                    new Action() { T =  new List<float>{360,390 }, V =  -0.3f },
-
-
-                                               }
-             },
-
-            { "_CeilingMaxHue", new List<Action> {
-
-                new Action() { T = new List<float> {0, 30f }, V =  0.1f },
-
-                    new Action() { T=  new List<float>{30,60 },  V =0.6f },
-                        new Action() { T= new List<float> {60,100 },  V = 0.3f },
-                            new Action() { T=  new List<float>{100,140 },  V = 0.5f } ,
-
-                new Action() { T =  new List<float>{140, 230 }, V =0.1f },
-
-                        new Action() { T=  new List<float>{230, 390 }, V=   1.0f },
-
-                      }
-             },
-
-            { "_CeilingMinSaturation", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 230 }, V = 0.2f  },
-                    new Action() { T =  new List<float>{230, 360 }, V =  1.0f },
-
-                    new Action() { T =  new List<float>{360,390 }, V =  0.2f },
-
-                    }
-             },
-
-            { "_CeilingMaxSaturation", new List<Action> {
-
-                new Action() { T=  new List<float>{0, 140 }, V =   0.8f  },
-
-                new Action() { T=  new List<float>{140,300 }, V = 1f },
-
-                new Action() { T = new List<float> {300,360 }, V =  0.7f  },
-                    new Action() { T = new List<float> {360, 390 }, V = 0.8f },
-
-
-                }
-             },
-
-            { "_CeilingMinValue", new List<Action> {
-
-                new Action() { T = new List<float> {0, 140 }, V = 0.2f },
-
-                new Action() { T =  new List<float>{140,230 },  V = 0.2f },
-                    new Action() { T=  new List<float>{230, 360 }, V =1.0f } ,
-
-                        new Action() { T =  new List<float>{360,390 }, V = 0.2f },
-
-
-                 }
-             },
-
-            { "_CeilingMaxValue", new List<Action> {
-
-                new Action() { T = new List<float> {0,390 }, V=  1f   },
-
-                }
-             },
-
-            { "_CeilingMinAlpha", new List<Action> {
-
-                new Action() { T =  new List<float>{ 0, 390 }, V = 0.2f  },
-
-                }
-             },
-
-            { "_CeilingMaxAlpha", new List<Action> {
-
-                new Action() { T =  new List<float>{0, 140 }, V = 0.8f  },
-
-                new Action() { T = new List<float> {140,230 },  V =  0.6f },
-                    new Action() { T =  new List<float>{230, 300 }, V =0.8f },
-
-
-                new Action() { T= new List<float> {300,360 }, V =  0.8f },
-                    new Action() { T =  new List<float>{360,390 }, V =0.8f  },
-
-                }
-             },
-
-        }; //    actionPlan = new Dictionary<String, List<Action> >  ()
-
+            Debug.Log("ActionPlanController component should be added to CommHub");
+        }
 
         m_threadGroupSize = Mathf.CeilToInt(m_BoidsNum / (float)BLOCK_SIZE);
   
@@ -1406,6 +914,8 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
         InitializeValues();
         InitializeBuffers();
+
+
     }//  private void Awake()
 
 
@@ -1413,6 +923,8 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
     private void Start()
     {
         //"initialize my connections to others, which have been initialized by their own Awake()
+
+        m_actionPlan =  m_actionPlanController.m_actionPlan;
 
         m_SceneStartTime = Time.time; // set the current time in millisecond
 
@@ -1458,50 +970,7 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
             //DetermineParamValue("_Scale", currTime, ref _meshSetting.Scale);
 
             //DetermineParamValue("_BoidsNum", currTime, ref m_BoidsNum);
-
-            //// check if the boids number changed => reset the boidsbuffer
-
-            //if (m_BoidsNum == BoidsNumPrev)
-            //{
-
-            //}
-            //else
-            //{
-
-
-            //    if (m_BoidsNum < BoidsNumPrev) // the current boids less than the previous
-            //    {
-            //        //add random boids to the at the of the buffer
-            //        BufferEndIndex = (int)m_BoidsNum;
-            //        BoidsNumPrev = (int)m_BoidsNum;
-            //    }
-
-            //    else
-            //    //if (m_BoidsNum > BoidsNumPrev)
-
-            //    {  //add random boids to the at the of the buffer
-
-            //        float numOfBoidsToAdd = m_BoidsNum - BoidsNumPrev;
-
-            //        SetBoidArray(BufferEndIndex, (int)numOfBoidsToAdd);
-
-            //        BufferEndIndex = (int)m_BoidsNum;
-            //        BoidsNumPrev = (int)m_BoidsNum;
-
-            //        BoidBuffer.SetData(boidArray); // buffer is R or RW
-
-            //    }
-
-
-
-            //    // ref BoidsNum has a value before calling  the function; ref = inout
-
-            //    m_threadGroupSize = Mathf.CeilToInt(m_BoidsNum / (float)BLOCK_SIZE);
-
-
-            //    BoidComputeShader.SetInt("_BoidsNum", (int)m_BoidsNum);
-
-            //} //    (m_BoidsNum !== BoidsNumPrev)
+        
 
             DetermineParamValue("_SpeedFactor", currTime, ref _speedFactor);
             DetermineParamValue("_ScaleFactor", currTime, ref _scaleFactor);
@@ -1550,64 +1019,66 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
 
             // apply the current values of the parameters to the compute shader
 
-            BoidComputeShader.SetFloat("_SpeedFactor", _speedFactor);
-            BoidComputeShader.SetFloat("_ScaleFactor", _scaleFactor);
+            m_BoidComputeShader.SetFloat("_SpeedFactor", _speedFactor);
+            m_BoidComputeShader.SetFloat("_ScaleFactor", _scaleFactor);
 
 
-            BoidComputeShader.SetFloat("_SeparateRadius", _separate.Radius);
-            BoidComputeShader.SetFloat("_SeparateWeight", _separate.Weight);
+            m_BoidComputeShader.SetFloat("_SeparateRadius", _separate.Radius);
+            m_BoidComputeShader.SetFloat("_SeparateWeight", _separate.Weight);
 
-            BoidComputeShader.SetFloat("_AlignmentRadius", _alignment.Radius);
-            BoidComputeShader.SetFloat("_AlignmentWeight", _alignment.Weight);
+            m_BoidComputeShader.SetFloat("_AlignmentRadius", _alignment.Radius);
+            m_BoidComputeShader.SetFloat("_AlignmentWeight", _alignment.Weight);
 
-            BoidComputeShader.SetFloat("_CohesionRadius", _cohesion.Radius);
-            BoidComputeShader.SetFloat("_CohesionWeight", _cohesion.Weight);
+            m_BoidComputeShader.SetFloat("_CohesionRadius", _cohesion.Radius);
+            m_BoidComputeShader.SetFloat("_CohesionWeight", _cohesion.Weight);
 
-            BoidComputeShader.SetFloat("_GroundFlockingWeight", _groundWeight.FlockingWeight);
-            BoidComputeShader.SetFloat("_GroundDivergeWeight", _groundWeight.DivergeWeight);
-            BoidComputeShader.SetFloat("_GroundCirculationWeight", _groundWeight.CirculationWeight);
+            m_BoidComputeShader.SetFloat("_GroundFlockingWeight", _groundWeight.FlockingWeight);
+            m_BoidComputeShader.SetFloat("_GroundDivergeWeight", _groundWeight.DivergeWeight);
+            m_BoidComputeShader.SetFloat("_GroundCirculationWeight", _groundWeight.CirculationWeight);
 
-            BoidComputeShader.SetFloat("_CeilingFlockingWeight", _ceilingWeight.FlockingWeight);
-            BoidComputeShader.SetFloat("_CeilingConvergeWeight", _ceilingWeight.ConvergeWeight);
-            BoidComputeShader.SetFloat("_CeilingCirculationWeight", _ceilingWeight.CirculationWeight);
-
-
-
-            BoidComputeShader.SetFloat("_GroundMinHue", _groundMinHue);
-            BoidComputeShader.SetFloat("_GroundMaxHue", _groundMaxHue);
-            BoidComputeShader.SetFloat("_GroundMinSaturation", _groundMinSaturation);
-            BoidComputeShader.SetFloat("_GroundMaxSaturation", _groundMaxSaturation);
-            BoidComputeShader.SetFloat("_GroundMinValue", _groundMinValue);
-            BoidComputeShader.SetFloat("_GroundMaxValue", _groundMaxValue);
-
-            BoidComputeShader.SetFloat("_GroundMinAlpha", _groundMinAlpha);
-            BoidComputeShader.SetFloat("_GroundMaxAlpha", _groundMaxAlpha);
+            m_BoidComputeShader.SetFloat("_CeilingFlockingWeight", _ceilingWeight.FlockingWeight);
+            m_BoidComputeShader.SetFloat("_CeilingConvergeWeight", _ceilingWeight.ConvergeWeight);
+            m_BoidComputeShader.SetFloat("_CeilingCirculationWeight", _ceilingWeight.CirculationWeight);
 
 
 
-            BoidComputeShader.SetFloat("_CeilingMinHue", _ceilingMinHue);
-            BoidComputeShader.SetFloat("_CeilingMaxHue", _ceilingMaxHue);
-            BoidComputeShader.SetFloat("_CeilingMinSaturation", _ceilingMinSaturation);
-            BoidComputeShader.SetFloat("_CeilingMaxSaturation", _ceilingMaxSaturation);
-            BoidComputeShader.SetFloat("_CeilingMinValue", _ceilingMinValue);
-            BoidComputeShader.SetFloat("_CeilingMaxValue", _ceilingMaxValue);
+            m_BoidComputeShader.SetFloat("_GroundMinHue", _groundMinHue);
+            m_BoidComputeShader.SetFloat("_GroundMaxHue", _groundMaxHue);
+            m_BoidComputeShader.SetFloat("_GroundMinSaturation", _groundMinSaturation);
+            m_BoidComputeShader.SetFloat("_GroundMaxSaturation", _groundMaxSaturation);
+            m_BoidComputeShader.SetFloat("_GroundMinValue", _groundMinValue);
+            m_BoidComputeShader.SetFloat("_GroundMaxValue", _groundMaxValue);
 
-            BoidComputeShader.SetFloat("_CeilingMinAlpha", _ceilingMinAlpha);
-            BoidComputeShader.SetFloat("_CeilingMaxAlpha", _ceilingMaxAlpha);
+            m_BoidComputeShader.SetFloat("_GroundMinAlpha", _groundMinAlpha);
+            m_BoidComputeShader.SetFloat("_GroundMaxAlpha", _groundMaxAlpha);
 
 
 
-            BoidComputeShader.SetFloat("_DeltaTime", Time.deltaTime);
+            m_BoidComputeShader.SetFloat("_CeilingMinHue", _ceilingMinHue);
+            m_BoidComputeShader.SetFloat("_CeilingMaxHue", _ceilingMaxHue);
+            m_BoidComputeShader.SetFloat("_CeilingMinSaturation", _ceilingMinSaturation);
+            m_BoidComputeShader.SetFloat("_CeilingMaxSaturation", _ceilingMaxSaturation);
+            m_BoidComputeShader.SetFloat("_CeilingMinValue", _ceilingMinValue);
+            m_BoidComputeShader.SetFloat("_CeilingMaxValue", _ceilingMaxValue);
+
+            m_BoidComputeShader.SetFloat("_CeilingMinAlpha", _ceilingMinAlpha);
+            m_BoidComputeShader.SetFloat("_CeilingMaxAlpha", _ceilingMaxAlpha);
+
+
+
+            m_BoidComputeShader.SetFloat("_DeltaTime", Time.deltaTime);
 
             //https://msdn.microsoft.com/en-us/library/windows/desktop/ff471566(v=vs.85).aspx
             //https://stackoverflow.com/questions/19860586/compute-shader-with-numthreads-1-1-1-runs-extremly-slow
-            // (1) The disptach call invokes threadGroupSize(256) * 1 * 1 Thread Groups in undefined order
 
+            // The disptach call invokes threadGroupSize(256) * 1 * 1 Thread Groups in undefined order
 
-            BoidComputeShader.Dispatch(KernelIdCountBoids, 1, 1, 1);
+           
+            m_BoidComputeShader.Dispatch(m_KernelIdCountBoids, 1, 1, 1);
 
-            BoidComputeShader.Dispatch(KernelIdGround, m_threadGroupSize, 1, 1);
-            BoidComputeShader.Dispatch(KernelIdCeiling, m_threadGroupSize, 1, 1);
+            //cf.    m_KernelIdGround = m_BoidComputeShader.FindKernel("SimulateCSGround");
+            m_BoidComputeShader.Dispatch(m_KernelIdGround, m_threadGroupSize, 1, 1);
+            m_BoidComputeShader.Dispatch(m_KernelIdCeiling, m_threadGroupSize, 1, 1);
 
             // Each thread group, e.g.  SV_GroupID = (2,0,0) will contain BLOCK_SIZE * 1 * 1 threads according to the
             // declaration "numthreads(BLOCK_SIZE, 1, 1)]" in the computeshader.
@@ -1626,30 +1097,37 @@ public class SimpleBoidsTreeOfVoice : MonoBehaviour
         // Debug.Log(totalNumOfSimulations);
 
 
+        //// m_boids.m_BoidBuffer
+        //m_BoidBuffer.GetData(m_boidArray); // used in LEDColorGenController
 
-        //BoidBuffer.GetData(boidArray);
-
-        // for (int i = 0; i < BoidsNum; i++)
+        //for (int i = 0; i < (int) m_BoidsNum/100; i++)
         //{
 
-        //     Debug.Log("boidNo = "); Debug.Log(i);
-        //     Debug.Log("position = = ");
-        //     Debug.Log(boidArray[i].Position);
+        //    Debug.Log("boidNo = "); Debug.Log(i);
+        //    Debug.Log("position = = ");
+        //    Debug.Log(m_boidArray[i].Position);
 
-        //     Debug.Log("wall no = = ");
-        //     Debug.Log(boidArray[i].WallNo);
+        //    Debug.Log("wall no = = ");
+        //    Debug.Log(m_boidArray[i].WallNo);
 
-        //    Debug.Log("color = = "); 
-        //    Debug.Log(boidArray[i].Color);
+        //    Debug.Log("color (HSV) = = ");
+        //    Debug.Log(m_boidArray[i].ColorHSV); // h,s,v ranges from 0 to 1
 
-        //  Color color = Color.HSVToRGB(boidArray[i].Color.x, boidArray[i].Color.y, boidArray[i].Color.z);
+        //    Debug.Log("color (RGB by my API) = = ");
+        //    Debug.Log(m_boidArray[i].Color);
 
-        // boidArray[i].Color = new Vector4(color.r, color.g, color.b, boidArray[i].Color.w);
+        //    Color color = Color.HSVToRGB(m_boidArray[i].ColorHSV.x, m_boidArray[i].ColorHSV.y, m_boidArray[i].ColorHSV.z);
 
 
-        // }
+        //    Debug.Log("color (RGB by Unity API) = = ");
+        //    Debug.Log(color);
+            
+        //    //m_boidArray[i].Color = new Vector4(color.r, color.g, color.b, m_boidArray[i].Color.w);
 
-        // BoidBuffer.SetData(boidArray); // buffer is R or RW
+
+        //}
+
+        //BoidBuffer.SetData(m_boidArray); // buffer is R or RW
 
         /*
         BoidCountBuffer.GetData(boidCountArray);

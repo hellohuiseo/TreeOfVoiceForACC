@@ -94,6 +94,9 @@ public class NeuroHeadSetControllerEditor : Editor
         // GUI가 변경되었다면 타겟을 다시 렌더링 하도록 하기 위해 dirty 상태로 마크한다.
         if (GUI.changed)
             EditorUtility.SetDirty(target);
+
+        // Show default inspector property editor
+        DrawDefaultInspector();
     }
 
     //// 실제 사용하지는 않지만 다른 컨트롤들이 어떻게 동작하는 알아보기 위해 한 번 살펴보시기 바랍니다.

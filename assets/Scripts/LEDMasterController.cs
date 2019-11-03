@@ -25,12 +25,16 @@ public class LEDMasterController : MonoBehaviour
     //SerialToArduinoMgr m_SerialToArduinoMgr; 
     Thread m_Thread;
 
-    //public SerialPort m_port;
+    Action m_updateArduino;
+
+   //public SerialPort m_port;
+
+   LEDColorGenController m_LEDColorGenController;
 
     public byte[] m_LEDArray; // 200  LEDs
 
     float m_Delay;
-    public const int m_LEDCount = 200; // m_LEDCount = 200
+    public int m_LEDCount; // from LEDColorGenController component
 
     //////////////////////////////////
     //
@@ -60,10 +64,18 @@ public class LEDMasterController : MonoBehaviour
 
 
         //m_SerialPort.ReadTimeout = 50;
-       // m_serialPort.ReadTimeout = 1000;  // sets the timeout value: 1000 ms  = sufficient for our purpose?
-                                          // InfiniteTimeout is the default.
-                                          //  m_SerialPort1.WriteTimeout = 5000??
-        m_serialPort.Open();
+        // m_serialPort.ReadTimeout = 1000;  // sets the timeout value: 1000 ms  = sufficient for our purpose?
+        // InfiniteTimeout is the default.
+        //  m_SerialPort1.WriteTimeout = 5000??
+
+        try
+        {
+            m_serialPort.Open();
+        }
+        catch (Exception ex)
+        {
+            Debug.Log("Error:" + ex.ToString());
+        }
 
 
         //m_SerialToArduinoMgr = new SerialToArduinoMgr();
@@ -71,11 +83,6 @@ public class LEDMasterController : MonoBehaviour
         //m_SerialToArduinoMgr.Setup();
 
         //m_port = m_SerialToArduinoMgr.port;
-
-        m_LEDArray = new byte[m_LEDCount * 3]; // 280*3 = 840 < 1024
-
-
-
     }
 
     void Start()
@@ -91,18 +98,25 @@ public class LEDMasterController : MonoBehaviour
         //    Application.Quit();
         //}
 
-        //m_ledColorGenController.m_ledSenderHandler += UpdateLEDArray;
+        //m_ledColorGenController.m_ledSenderHandler += UpdateLEDArray; // THis is moved to CommHub.cs
 
         // public delegate LEDSenderHandler (byte[] LEDArray); defined in LEDColorGenController
         // public event LEDSenderHandler m_ledSenderHandler;
 
+        m_LEDColorGenController = this.gameObject.GetComponent<LEDColorGenController>();
+        m_LEDCount = m_LEDColorGenController.m_totalNumOfLEDs;
+
+        m_LEDArray = new byte[m_LEDCount * 3]; // 280*3 = 840 < 1024
 
         // define an action
-        Action updateArduino = () => {
+        m_updateArduino = () => {
 
+            Debug.Log("Thread Run Test");
             // Write(byte[] buffer, int offset, int count);
-            m_serialPort.Write(m_LEDArray, 0, m_LEDArray.Length); 
-            // The WriteBufferSize of the Serial Port is 1024, whereas that of Arduino is 64
+            // for debugging, comment out:
+           // m_serialPort.Write(m_LEDArray, 0, m_LEDArray.Length); 
+            // The WriteBufferSize of the Serial Port is 1024, whereas that of Arduino is 64; m_LEDArray is 200 * 3 = 600 bytes less than
+            // the Serial Port size.
             //https://stackoverflow.com/questions/22768668/c-sharp-cant-read-full-buffer-from-serial-port-arduino
 
         };
@@ -110,28 +124,66 @@ public class LEDMasterController : MonoBehaviour
 
         //m_Thread = null;
         //if(connected) { // create and start a thread for the action updateArduino
-        m_Thread = new Thread(new ThreadStart(updateArduino)); // ThreadStart() is a delegate (pointer type)
+
+       m_Thread = new Thread(new ThreadStart(m_updateArduino)); // ThreadStart() is a delegate (pointer type)
+      // Thread state = unstarted
        // m_Thread.Start();
 
     }
 
 
-    public void UpdateLEDArray( byte[] ledArray)
+    public void UpdateLEDArray(byte[] ledArray)
     {
         // Send the new LED array only when the sending thread has finished sending the previous LEDArray
         // THat is, only when m_Thread.IsAlive is false. Tit happends when the method of the thread returns;
         // That is when the sending thread has sent all the LED array.
 
-        if (!m_Thread.IsAlive)
+        //Debug.Log("1) Thread State == " + m_Thread.ThreadState);
+
+        //Debug.Log("2) Thread.IsAlive " + m_Thread.IsAlive);
+
+        //https://stackoverflow.com/questions/6578001/how-to-start-a-stopped-thread
+        //This would create a new instance of the thread and start it. The ThreadStateException error is because,
+        //simply, you can't re-start a thread that's in a stopped state.
+        // m_MyThread.Start() is only valid for threads in the Unstarted state.
+        //  What needs done in cases like this is to create a new thread instance and invoke Start() on the new instance.
+
+        if ( !m_Thread.IsAlive )
         {
-            m_LEDArray = ledArray;
-            m_Thread.Start(); // use the new LED array for the new invocation of the sending thread
+           
+            try
+            {
+                // use the new LED array for the new invocation of the sending thread
+                m_LEDArray = ledArray;
+
+                m_Thread = new Thread(new ThreadStart(m_updateArduino) );
+                //m_Thread.IsBackground = true;
+                m_Thread.Start();
+              
+            }
+
+            catch (Exception ex)
+            {
+                Debug.Log(" Exception =" + ex.ToString());
+
+            }
+
+            //Debug.Log("Thread State After Start() ==" + m_Thread.ThreadState);
+
+            //Debug.Log("Thread After Start(): IsAlive =" + m_Thread.IsAlive);
+
+
         }
         else
         {
-            // The sending thread is still sending =>: The arrived LED array is discarded
+            Debug.Log("Thread is alive; Wait until it finishes");
+
+            // The sending thread is still busy sending  the previous LED array =>: The arrived LED array is discarded
         }
-        
+
+    }
+    //  UpdateLEDArray()
+
     void Update()
     {
       

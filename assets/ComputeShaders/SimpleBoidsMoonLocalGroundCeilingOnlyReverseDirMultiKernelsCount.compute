@@ -22,7 +22,8 @@ struct Boid
 	float speed;            // the speed of a boid
 
 	float  radius; // the radius of a circle boid
-	float4 color;         // RGBA color
+	float3 colorHSV;         // HSV color
+	float4 colorRGB;         // RGBA color
 	float2 soundGrain; //        the freq (pitch) and amp of the boid sound grain
 	float duration; //   the duration of the boid for one frame. 
 	int   wallNo;    // the number of the wall on which the boid is 
@@ -190,7 +191,7 @@ float3 findUnitVectorOrthoTo(float3 vec)
 
 //\param fB Blue component, used as output, range: [0, 1]
 
-//\param fH Hue component, used as input, range: [0, 360]
+//\param fH Hue component, used as input, range: [0, 1] => changed to [0,360] at the beginning
 
 //\param fS Hue component, used as input, range: [0, 1]
 
@@ -200,9 +201,11 @@ float3 HSVtoRGB(float fH, float fS, float fV)
 {
     float fR, fG, fB;
 	
+	float fHdeg = fH * 360;
+
 	float fC = fV * fS; // Chroma
 
-	float fHPrime = fmod(fH / 60.0, 6);
+	float fHPrime = fmod(fHdeg / 60.0, 6);
 
 	float fX = fC * (1 - abs(fmod(fHPrime, 2) - 1));
 
@@ -305,8 +308,8 @@ float3 HSVtoRGB(float fH, float fS, float fV)
   // The value/lightness corresponds to the radius of the boid from the center. 
 
 
-
-void computeBoidColor(inout Boid pBoid)
+// Compute the HSV color of the boid and convert it to RGB color
+void computeBoidColor(inout Boid pBoid) 
 {
 
 
@@ -339,7 +342,7 @@ void computeBoidColor(inout Boid pBoid)
 			h = h + 1;
 		}
 
-		h = h * 360.0; // hue in the degree range
+		//h = h * 360.0; // hue in the degree range ??? (different from Unity API, where h,s,v are from 0 to 1 )
 
 		//lerp(a, b, f)
 		
@@ -357,8 +360,9 @@ void computeBoidColor(inout Boid pBoid)
 
 
 		// HSV = float3(h, s, v);
+		 pBoid.colorHSV = float3(h, s, v);
 
-		 pBoid.color = float4( HSVtoRGB(h, s, v), alpha);
+		 pBoid.colorRGB = float4( HSVtoRGB(h, s, v), alpha);
 
         //pBoid.color = float4(HSV2RGB(HSV), alpha);		
 		//pBoid.color = float4(HSV, alpha);
@@ -389,7 +393,7 @@ void computeBoidColor(inout Boid pBoid)
 		{
 			h = h + 1;
 		}
-		h = h * 360.0; // hue in the degree range
+		//h = h * 360.0; // hue in the degree range
 
 
 		//h = lerp( 360.0 * _CeilingMinHue, 360.0 * _CeilingMaxHue, h); // reduce the Hue in range [0,1]to [_GroundMinHue, _GroundMaxHue]
@@ -411,7 +415,9 @@ void computeBoidColor(inout Boid pBoid)
 
 		//pBoid.color = float4(HSV2RGB(HSV), alpha);
 
-		pBoid.color = float4(HSVtoRGB(h, s, v), alpha);
+		pBoid.colorHSV = float3(h, s, v);
+
+		pBoid.colorRGB = float4( HSVtoRGB(h, s, v), alpha);
 
 		return;
 
@@ -813,7 +819,7 @@ void SimulateCSCeiling(uint3 DTid : SV_DispatchThreadID)
 
     const int pId = DTid.x;
 
-    Boid pBoid = _BoidBuffer[pId];    
+    Boid pBoid = _BoidBuffer[pId];    // Field values of the _BoidBuffer structures are copied to pBoid??
    
     
     int sepCnt = 0;
@@ -1036,11 +1042,11 @@ void SimulateCSCeiling(uint3 DTid : SV_DispatchThreadID)
 
 		pBoid.scale = pBoid.scale  * _ScaleFactor;
 
-		computeBoidColor( pBoid);
+		computeBoidColor( pBoid); // both HSV and RBG colors
 						
 		postProcessBoidState(prevPos, pBoid);
 
-		_BoidBuffer[pId] = pBoid;
+		_BoidBuffer[pId] = pBoid; // copy the new Boid to the original structure _BoidBuffer[pid]
 		return;
 	} // 	if (pBoid.wallNo  1) 
 

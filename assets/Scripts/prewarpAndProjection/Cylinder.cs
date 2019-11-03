@@ -45,7 +45,9 @@ public class Cylinder : MonoBehaviour {
     
 
     public void Rebuild(){
+
 		MeshFilter meshFilter = GetComponent<MeshFilter>(); // GetComponent<MeshFiler>() i gameObject.GetComponent<MeshFilter>()
+
         if (meshFilter==null){
 			Debug.LogError("MeshFilter not found!");
 			return;
