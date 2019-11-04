@@ -93,9 +93,9 @@ public class LEDColorGenController : MonoBehaviour
     byte[] m_LEDArray;
 
     [Range(0.0f, 1.0f)]
-    [SerializeField] protected float MinCylinderRadius = 0.5f;
+    [SerializeField] protected float MinCylinderRadiusScale = 0.5f;
     [Range(0.0f, 1.0f)]
-    [SerializeField] protected float MaxCylinderRadius = 1.0f;
+    [SerializeField] protected float MaxCylinderRadiusScale = 1.0f;
 
     public float m_minLEDInterval = 0.2f;
     public float m_maxLEDInterval = 0.5f;
@@ -340,7 +340,7 @@ public class LEDColorGenController : MonoBehaviour
              m_BoidLEDArray[i].Position = ledPos;
 
 
-            float initScaleX = Random.Range(MinCylinderRadius, MaxCylinderRadius); // 0.5 ~ 1.0
+            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
             //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
             //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
                        
@@ -401,7 +401,7 @@ public class LEDColorGenController : MonoBehaviour
 
             m_BoidLEDArray[m_numOfChain1 + m_numOfChain2  + i].Position = ledPos;
 
-            float initScaleX = Random.Range(MinCylinderRadius, MaxCylinderRadius); // 0.5 ~ 1.0
+            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
                                                                                    //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
                                                                                    //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
 
@@ -556,8 +556,8 @@ public class LEDColorGenController : MonoBehaviour
             m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
             m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
 
-            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
-            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+          //  Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+           // Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
 
             //Debug.Log(i + "th LED Color (value range check) from m_boids.m_boidArray" 
             //    + m_boids.m_boidArray[  m_BoidLEDArray[i].NearestBoidID ].Color );

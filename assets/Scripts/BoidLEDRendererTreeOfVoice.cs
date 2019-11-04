@@ -26,6 +26,8 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     CylinderMesh m_instanceMeshCylinder;
     Mesh m_boidInstanceMesh;
 
+    public float m_cylinderHeight = 10; // m; scale = 0.1 ~ 0.3
+    public float m_cylinderRadius = 0.1f; // 0.1 m =10cm
 
     public float m_scale = 1.0f; // the scale of the instance mesh
       
@@ -36,9 +38,7 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     uint numIndices;
 
     // parameters for cylinder construction
-    float height = 10; // m; scale = 0.1 ~ 0.3
-    float radius = 0.1f; // 0.1 m =10cm
-
+   
  
     int nbSides = 18;
     int nbHeightSeg = 1;
@@ -78,7 +78,7 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
                
     
 
-        m_instanceMeshCylinder =  new CylinderMesh(height, radius, nbSides, nbHeightSeg);
+        m_instanceMeshCylinder =  new CylinderMesh(m_cylinderHeight, m_cylinderRadius, nbSides, nbHeightSeg);
 
         m_boidInstanceMesh = m_instanceMeshCylinder.m_mesh;
 
@@ -166,18 +166,18 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     public void Update () 
 	{
    
-        m_LEDColorGenController.m_BoidLEDBuffer.GetData(m_BoidLEDArray);
+        //m_LEDColorGenController.m_BoidLEDBuffer.GetData(m_BoidLEDArray);
 
-        Debug.Log("In Update(): BoidLEDRenderTreeOfVoice:");
+        //Debug.Log("In Update(): BoidLEDRenderTreeOfVoice:");
 
-        for (int i = 0; i < m_LEDColorGenController.m_totalNumOfLEDs; i++)
-        {
+        //for (int i = 0; i < m_LEDColorGenController.m_totalNumOfLEDs; i++)
+        //{
             
-            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
-            Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
-            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+        //    Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+        //    Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+        //    Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
 
-        }
+        //}
 
         ////BOIDLEDCyliner drawing
 

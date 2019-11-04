@@ -555,7 +555,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 468306996}
   m_HandleRect: {fileID: 468306995}
   m_Direction: 0
-  m_Value: 0.00000089757503
+  m_Value: 0.0000013463625
   m_Size: 0.9149999
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1988,8 +1988,8 @@ MonoBehaviour:
   m_numberOfWalls: 2
   m_BoidLEDComputeShader: {fileID: 7200000, guid: 57cedd4fb383ff940b8193c90698019d,
     type: 3}
-  MinCylinderRadius: 0.5
-  MaxCylinderRadius: 1
+  MinCylinderRadiusScale: 0.5
+  MaxCylinderRadiusScale: 1
   m_minLEDInterval: 0.2
   m_maxLEDInterval: 0.5
   m_innerCircleRadius: 1
@@ -2059,7 +2059,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_boidInstanceMaterial: {fileID: 2100000, guid: edd2a7808224ef04dace53a43dd2a8dc,
     type: 2}
-  m_instanceMeshSphere: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_instanceMeshSphere: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 3}
   m_useCircleMesh: 1
   m_scale: 1
 --- !u!114 &1304115024
@@ -2123,6 +2123,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_boidLEDInstanceMaterial: {fileID: 2100000, guid: bb23dba0c1e1a64488eaa91992156c54,
     type: 2}
+  m_cylinderHeight: 5
+  m_cylinderRadius: 0.05
   m_scale: 1
 --- !u!1 &1306796409
 GameObject:

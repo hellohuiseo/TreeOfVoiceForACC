@@ -27,7 +27,6 @@ public class LEDMasterController : MonoBehaviour
 
     Action m_updateArduino;
 
-   //public SerialPort m_port;
 
    LEDColorGenController m_LEDColorGenController;
 
@@ -111,24 +110,30 @@ public class LEDMasterController : MonoBehaviour
         // define an action
         m_updateArduino = () => {
 
-            Debug.Log("Thread Run Test");
-            // Write(byte[] buffer, int offset, int count);
+            //Debug.Log("Thread Run Test");
+            //Write(byte[] buffer, int offset, int count);
             // for debugging, comment out:
-           // m_serialPort.Write(m_LEDArray, 0, m_LEDArray.Length); 
+
+            try
+            {
+                m_serialPort.Write(m_LEDArray, 0, m_LEDArray.Length);
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("Error:" + ex.ToString());
+
+            }
+
             // The WriteBufferSize of the Serial Port is 1024, whereas that of Arduino is 64; m_LEDArray is 200 * 3 = 600 bytes less than
             // the Serial Port size.
             //https://stackoverflow.com/questions/22768668/c-sharp-cant-read-full-buffer-from-serial-port-arduino
 
         };
-
-
-        //m_Thread = null;
-        //if(connected) { // create and start a thread for the action updateArduino
-
+        
+       
        m_Thread = new Thread(new ThreadStart(m_updateArduino)); // ThreadStart() is a delegate (pointer type)
       // Thread state = unstarted
-       // m_Thread.Start();
-
+  
     }
 
 
@@ -154,10 +159,13 @@ public class LEDMasterController : MonoBehaviour
             try
             {
                 // use the new LED array for the new invocation of the sending thread
+
                 m_LEDArray = ledArray;
 
                 m_Thread = new Thread(new ThreadStart(m_updateArduino) );
                 //m_Thread.IsBackground = true;
+
+                // Starting The thread sends m_LEDArray to the arduino master
                 m_Thread.Start();
               
             }
@@ -168,9 +176,23 @@ public class LEDMasterController : MonoBehaviour
 
             }
 
-            //Debug.Log("Thread State After Start() ==" + m_Thread.ThreadState);
+            // ** yooJin, print m_LEDArray here and compare it with the data received by
+            // the arduino master. Because the default serial port is used by the communication
+            // between the unity script and the arduino master, you need to use another serial port
+            // to send data from the master arduino to the serial monitor
 
-            //Debug.Log("Thread After Start(): IsAlive =" + m_Thread.IsAlive);
+           for (int i=0; i < m_LEDCount; i++)
+            {
+                Vector3 color = new Vector3();
+
+                color[0] = m_LEDArray[3 * i + 0];
+                color[1] = m_LEDArray[3 * i + 1];
+                color[2] = m_LEDArray[3 * i + 2];
+
+
+                Debug.Log(i +  "th LED color:" + color);
+
+            }
 
 
         }
