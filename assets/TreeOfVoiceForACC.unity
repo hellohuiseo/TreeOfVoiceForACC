@@ -555,8 +555,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 468306996}
   m_HandleRect: {fileID: 468306995}
   m_Direction: 0
-  m_Value: 0.0000013463625
-  m_Size: 0.9149999
+  m_Value: -0.0000013463649
+  m_Size: 0.9150001
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1286,8 +1286,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 69723809}
   m_HandleRect: {fileID: 69723808}
   m_Direction: 2
-  m_Value: 0.99999976
-  m_Size: 0.60999995
+  m_Value: 1.0000002
+  m_Size: 0.6100001
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1982,7 +1982,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_boids: {fileID: 0}
   m_BoidsNum: 0
-  m_totalNumOfLEDs: 200
+  m_totalNumOfLEDs: 0
   m_samplingWall: 1
   m_samplingRadius: 3
   m_numberOfWalls: 2
@@ -1992,14 +1992,19 @@ MonoBehaviour:
   MaxCylinderRadiusScale: 1
   m_minLEDInterval: 0.2
   m_maxLEDInterval: 0.5
-  m_innerCircleRadius: 1
-  m_outerCircleRadius: 2
-  m_numOfChain1: 40
-  m_numOfChain2: 40
-  m_numOfChain3: 60
-  m_numOfChain4: 60
-  m_beginFromInChain1: -80
+  m_startingRadiusOfInnerChain: 0.7
+  m_endingRadiusOfInnerChainThreeTurns: 1
+  m_startingRadiusOfOuterChain: 1.7
+  m_endingRadiusOfOuterChainThreeTurns: 2
+  m_firstPartOfInnerChain: 40
+  m_secondPartOfInnerChain: 40
+  m_firstPartOfOuterChain: 60
+  m_secondPartOfOuterChain: 60
+  m_beginFromInChain1: -135
   m_beginFromInChain2: -70
+  m_innerCylinderHeightScale: 4.5
+  m_outerCylinderHeightScale: 2.5
+  m_LEDChainToCeilingScale: 5
 --- !u!114 &1304115020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2123,8 +2128,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_boidLEDInstanceMaterial: {fileID: 2100000, guid: bb23dba0c1e1a64488eaa91992156c54,
     type: 2}
-  m_cylinderHeight: 5
-  m_cylinderRadius: 0.05
+  m_ceilingHeight: 4.5
+  m_cylinderRadiusScale: 0.05
   m_scale: 1
 --- !u!1 &1306796409
 GameObject:
@@ -2658,7 +2663,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1456329996}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

@@ -43,7 +43,8 @@ public class LEDColorGenController : MonoBehaviour
         public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
                                 // 0=> the inner  circular wall. 
                                 // 1 => the outer circular wall;
-        public int NearestBoidID;                                    
+        public int NearestBoidID;
+        public int NeighborCount;
     }
 
 
@@ -124,6 +125,8 @@ public class LEDColorGenController : MonoBehaviour
     public float m_innerCylinderHeightScale = 4.5f; // 4.5 m; Unit Hight = 1 m
     public float m_outerCylinderHeightScale = 2.5f; // 4.5 m; Unit Hight = 1 m
 
+    public float m_LEDChainToCeilingScale = 5.0f;
+
     float m_startAngleOfChain1; // this is the angle where r0, that is, a0 is defined, that is, on the local x axis
     float m_startAngleOfChain2;
 
@@ -181,6 +184,8 @@ public class LEDColorGenController : MonoBehaviour
 
         m_BoidLEDComputeShader.SetInt("_SamplingWall", m_samplingWall);
         m_BoidLEDComputeShader.SetFloat("_SamplingRadius", m_samplingRadius);
+        m_BoidLEDComputeShader.SetFloat("_LEDChainToCeilingScale", m_LEDChainToCeilingScale);
+    
 
 
 
@@ -198,7 +203,7 @@ public class LEDColorGenController : MonoBehaviour
 
         //Graphics.SetRandomWriteTarget(1, m_BoidLEDRenderDebugBuffer);
 
-       // m_ComputeBufferArray = new BoidLEDRenderDebugData[m_totalNumOfLEDs];
+        // m_ComputeBufferArray = new BoidLEDRenderDebugData[m_totalNumOfLEDs];
         //m_ComputeBufferArray0 = new Vector4[m_totalNumOfLEDs];
 
         //m_BoidLEDRenderDebugBuffer.SetData(m_ComputeBufferArray);
@@ -229,13 +234,11 @@ public class LEDColorGenController : MonoBehaviour
 
         for (int i = 0; i < m_totalNumOfLEDs; i++)
         {
-            m_LEDArray[i * 3] = (byte)(255 * m_BoidLEDArray[i].Color[0]); // Vector4 Color
-            m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
-            m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
-
+           
             Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
             Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
             Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+            Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
 
         }
 
@@ -566,8 +569,19 @@ public class LEDColorGenController : MonoBehaviour
             m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
             m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
 
-          //  Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
-           // Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+       
+
+                Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+                Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+                Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+                Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
+
+        
+
+
+
+            //  Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+            // Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
 
             //Debug.Log(i + "th LED Color (value range check) from m_boids.m_boidArray" 
             //    + m_boids.m_boidArray[  m_BoidLEDArray[i].NearestBoidID ].Color );

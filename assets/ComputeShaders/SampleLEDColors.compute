@@ -103,6 +103,8 @@ RWStructuredBuffer<float4> _BoidLEDRenderDebugBuffer0;
 int _SamplingWall;
 float _SamplingRadius;
 
+float _LEDChainToCeilingScale;
+
 int _BoidsNum;
 int _NumOfWalls;
 
@@ -143,6 +145,10 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 	
 	int minIndex = -1;
 
+	float3 posInCeiling = _LEDChainToCeilingScale * pBoidLED.position;
+
+	//float3 posInCeiling =  pBoidLED.position;
+
 	for (int nId = 0; nId < _BoidsNum; nId++)
 	{
 		//if (nId == pId) continue; // go to the next iteration
@@ -154,8 +160,7 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 			continue;  // consider only the boids on the selected wall, the ground or the ceiling
 		}
 
-
-		diffVec = pBoidLED.position - nBoid.position; // the boid's position is (x,0,z) in  the wall  frame for the boid
+		diffVec = nBoid.position - posInCeiling; // the boid's position is (x,0,z) in  the wall  frame for the boid
 		dist = length(diffVec);
 
 
@@ -216,6 +221,7 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 		_BoidLEDBuffer[pId].color = colorSum / weightSum;
 
 		_BoidLEDBuffer[pId].nearestBoidID = minIndex;
+		_BoidLEDBuffer[pId].neighborCount  = neighborCnt;
 
 		/*_BoidLEDRenderDebugBuffer[pId].nearestBoidID = minIndex;
 		_BoidLEDRenderDebugBuffer[pId].neighborCount = neighborCnt;
