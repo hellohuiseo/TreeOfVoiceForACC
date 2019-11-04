@@ -18,13 +18,14 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
 
     SimpleBoidsTreeOfVoice m_boids; // _boids.BoidBuffer is a ComputeBuffer
+
     LEDColorGenController m_LEDColorGenController;
 
     [SerializeField] Material m_boidLEDInstanceMaterial;
-
-    int BoidsNum;
     
-    Mesh m_instanceMeshCylinder;
+    CylinderMesh m_instanceMeshCylinder;
+    Mesh m_boidInstanceMesh;
+
 
     public float m_scale = 1.0f; // the scale of the instance mesh
       
@@ -33,21 +34,37 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     uint[] m_boidLEDArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
     uint numIndices;
-    Vector3[] vertices3D;
 
-    int[] indices;
-
-       
+    // parameters for cylinder construction
     float height = 10; // m; scale = 0.1 ~ 0.3
     float radius = 0.1f; // 0.1 m =10cm
 
-    // parameters for cylinder construction
+ 
     int nbSides = 18;
     int nbHeightSeg = 1;
 
+    public struct BoidLEDData
+    {
+
+        public Vector3 Position; //
+        public Vector3 HeadDir; // heading direction of the boid on the local plane
+        public Vector4 Color;         // RGBA color
+        public Vector3 Scale;
+        public int WallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+                                // 0=> the inner  circular wall. 
+                                // 1 => the outer circular wall;
+        public int NearestBoidID;
+    }
+
+
+
+    BoidLEDData[] m_BoidLEDArray;
 
     private void Awake()
     {
+        m_LEDColorGenController = this.gameObject.GetComponent<LEDColorGenController>();
+        m_boids = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
+
 
 
         if (m_boidLEDInstanceMaterial == null)
@@ -59,9 +76,11 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
         }
                
-        MeshCreator meshCylinderCreator = new MeshCreator();
+    
 
-        m_instanceMeshCylinder = meshCylinderCreator.CreateCylinderMesh(height, radius, nbSides, nbHeightSeg);
+        m_instanceMeshCylinder =  new CylinderMesh(height, radius, nbSides, nbHeightSeg);
+
+        m_boidInstanceMesh = m_instanceMeshCylinder.m_mesh;
 
         m_boidLEDArgsBuffer = new ComputeBuffer(
           1,
@@ -72,13 +91,10 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     } // Awake()
     void Start () 
 	{
-                
-        // get the reference to SimpleBoidsTreeOfVoice
-
-        m_boids = this.gameObject.GetComponent<SimpleBoidsTreeOfVoice>();
     
+        m_BoidLEDArray = new BoidLEDData[m_LEDColorGenController.m_totalNumOfLEDs];
 
-        if (m_boids == null)
+              if (m_boids == null)
         {
             Debug.LogError("SimpleBoidsTreeOfVoice component should be attached to CommHub");
             //EditorApplication.Exit(0);
@@ -87,25 +103,7 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
             //return;
 
         }
-
-
-        // check if _boids.BoidBuffer is not null
-        if (m_boids.m_BoidBuffer is null)
-        {
-
-            Debug.LogError("m_boids.m_BoidBuffer is null");
-            //EditorApplication.Exit(0);
-            Application.Quit();
-
-            //return; 
-        }
-
-
-        //BoidLED rendering 
-
-        m_LEDColorGenController = this.gameObject.GetComponent<LEDColorGenController>();
-
-
+                           
         if (m_LEDColorGenController.m_BoidLEDBuffer == null)
         {
             Debug.LogError("m_LEDColorGenController.m_BoidLEDBuffer should be set in Awake() of  LEDColorGenController");
@@ -116,17 +114,17 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
         
         ///
-        numIndices = m_instanceMeshCylinder ? m_instanceMeshCylinder.GetIndexCount(0) : 0;
+        numIndices = m_boidInstanceMesh ? m_boidInstanceMesh.GetIndexCount(0) : 0;
         //GetIndexCount(submesh = 0)
 
 
-        m_boidLEDArgs[0] = numIndices;  // the number of indices in the set of triangles
-
+        m_boidLEDArgs[0] = numIndices;  // the number of indices per instance
         m_boidLEDArgs[1] = (uint) m_LEDColorGenController.m_totalNumOfLEDs; // the number of instances
 
         m_boidLEDArgsBuffer.SetData( m_boidLEDArgs) ;
 
-
+        //m_boidLEDInstanceMaterial.SetInt("_BoidOrLED", 0); // Boid
+        //m_boidLEDInstanceMaterial.SetInt("_BoidOrLED", 1); // LED
         m_boidLEDInstanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale));
 
         m_boidLEDInstanceMaterial.SetVector("GroundMaxCorner", m_boids.GroundMaxCorner);
@@ -136,8 +134,28 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
         m_boidLEDInstanceMaterial.SetVector("CeilingMinCorner", m_boids.CeilingMinCorner);
 
         m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_LEDColorGenController.m_BoidLEDBuffer);
-        
-     
+
+        m_boidLEDInstanceMaterial.SetBuffer("_BoidBuffer", m_boids.m_BoidBuffer);
+
+
+        //"_BoidLEDBuffer" is computed   // m_LEDColorGenController.m_BoidLEDBuffer is ready in and AWake() and Update() of m_LEDColorGenController.
+
+        //https://gamedev.stackexchange.com/questions/128976/writing-and-reading-computebuffer-in-a-shader
+
+        //m_LEDColorGenController.m_BoidLEDBuffer.GetData(m_BoidLEDArray);     
+
+        //Debug.Log("In Start(): BoidLEDRenderTreeOfVoice:");
+
+        //for (int i = 0; i < m_LEDColorGenController.m_totalNumOfLEDs; i++)
+        //{
+
+        //    Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+        //    Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+        //    Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+
+        //}
+
+
 
     } // Start()
 
@@ -147,7 +165,36 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     // Update is called once per frame
     public void Update () 
 	{
-		RenderInstancedMesh();              
+   
+        m_LEDColorGenController.m_BoidLEDBuffer.GetData(m_BoidLEDArray);
+
+        Debug.Log("In Update(): BoidLEDRenderTreeOfVoice:");
+
+        for (int i = 0; i < m_LEDColorGenController.m_totalNumOfLEDs; i++)
+        {
+            
+            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+            Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+
+        }
+
+        ////BOIDLEDCyliner drawing
+
+
+      // m_LEDColorGenController.m_BoidLEDBuffer.SetData(m_BoidLEDArray);
+
+        Graphics.DrawMeshInstancedIndirect(
+             m_boidInstanceMesh, // a mesh to be drawn
+            0,
+            m_boidLEDInstanceMaterial, // This material defines the parameters and buffers passed to the shader
+            
+            new Bounds(m_boids.RoomCenter, m_boids.RoomSize),
+            m_boidLEDArgsBuffer // this contains the number of instances and index coung per instance
+        );
+
+
+          
        
     }
 
@@ -161,34 +208,5 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
     }
 
-	private void RenderInstancedMesh()
-	{
-
-        //"_BoidLEDBuffer" is computed  by LEDColorGenController
-
-        // reading from the buffer written by regular shaders
-        //https://gamedev.stackexchange.com/questions/128976/writing-and-reading-computebuffer-in-a-shader
-
-        // _boids.BoidBuffer.GetData(boidArray);
-
-        // m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_LEDColorGenController.m_BoidLEDBuffer);
-        // m_LEDColorGenController.m_BoidLEDBuffer is ready in and AWake() and Update() of m_LEDColorGenController.
-
-        ////BOIDLEDCyliner drawing
-
-
-        Graphics.DrawMeshInstancedIndirect(
-             m_instanceMeshCylinder,
-
-            0,
-            m_boidLEDInstanceMaterial, // This material defines the shader which receives instanceID
-            new Bounds(m_boids.RoomCenter, m_boids.RoomSize),
-            m_boidLEDArgsBuffer // this contains the information about the instances
-        );
-
-
-
-
-    }//private void RenderInstancedMesh()
 
 }//class BoidLEDRendererTreeOfVoice 

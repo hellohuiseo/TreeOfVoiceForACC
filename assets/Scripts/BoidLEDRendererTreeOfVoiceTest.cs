@@ -9,7 +9,7 @@ using Random = UnityEngine.Random;
 
 public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 {
-
+    int m_totalNumOfLEDs;
     //**************************************
     public struct BoidLEDData
     {
@@ -24,7 +24,6 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
         public int NearestBoidID;
     }
 
-    public int m_totalNumOfLEDs;
 
     public int m_samplingWall = 1; // ceiling
 
@@ -45,9 +44,9 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
     byte[] m_LEDArray;
 
     [Range(0.0f, 1.0f)]
-    [SerializeField] protected float MinCylinderRadius = 0.5f;
+    [SerializeField] protected float MinCylinderRadiusScale = 0.5f;
     [Range(0.0f, 1.0f)]
-    [SerializeField] protected float MaxCylinderRadius = 1.0f;
+    [SerializeField] protected float MaxCylinderRadiusScale = 1.0f;
 
     public float m_minLEDInterval = 0.2f;
     public float m_maxLEDInterval = 0.5f;
@@ -104,7 +103,11 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 
     int BoidsNum;
     
-    Mesh m_instanceMeshCylinder;
+
+    CircleMesh m_instanceMeshCircle;
+    CylinderMesh m_instanceMeshCylinder;
+
+    Mesh m_boidInstanceMesh;
 
     public float m_scale = 1.0f; // the scale of the instance mesh
       
@@ -117,7 +120,8 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 
     int[] indices;
 
-       
+    float unitRadius = 1;
+
     float height = 10; // m; scale = 0.1 ~ 0.3
     float radius = 0.1f; // 0.1 m =10cm
 
@@ -195,7 +199,7 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
             m_BoidLEDArray[i].Position = ledPos;
 
 
-            float initScaleX = Random.Range(MinCylinderRadius, MaxCylinderRadius); // 0.5 ~ 1.0
+            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
                                                                                    //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
                                                                                    //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
 
@@ -256,7 +260,7 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 
             m_BoidLEDArray[m_numOfChain1 + m_numOfChain2 + i].Position = ledPos;
 
-            float initScaleX = Random.Range(MinCylinderRadius, MaxCylinderRadius); // 0.5 ~ 1.0
+            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
                                                                                    //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
                                                                                    //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
 
@@ -329,9 +333,9 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
         m_startAngleOfChain2 = m_beginFromInChain2 * M_PI / 180; // degree
 
 
-        m_BoidLEDBuffer = new ComputeBuffer(m_totalNumOfLEDs, Marshal.SizeOf(typeof(BoidLEDData)));
+        m_BoidLEDBuffer = new ComputeBuffer(m_LEDColorGenController.m_totalNumOfLEDs, Marshal.SizeOf(typeof(BoidLEDData)));
 
-        m_BoidLEDArray = new BoidLEDData[m_totalNumOfLEDs];
+        //m_BoidLEDArray = new BoidLEDData[m_boids.n_BoidsNum];
 
         //For each kernel we are setting the buffers that are used by the kernel, so it would read and write to those buffers
 
@@ -354,10 +358,13 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
             //return;
 
         }
-               
-        MeshCreator meshCylinderCreator = new MeshCreator();
 
-        m_instanceMeshCylinder = meshCylinderCreator.CreateCylinderMesh(height, radius, nbSides, nbHeightSeg);
+        m_instanceMeshCircle = new CircleMesh(unitRadius);
+        m_instanceMeshCylinder = new CylinderMesh(height, radius, nbSides, nbHeightSeg);
+
+        m_boidInstanceMesh = m_instanceMeshCylinder.m_mesh;
+
+       // m_boidInstanceMesh = m_instanceMeshCircle.m_mesh;
 
         m_boidLEDArgsBuffer = new ComputeBuffer(
           1,
@@ -412,14 +419,15 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 
 
         ///
-        numIndices = m_instanceMeshCylinder ? m_instanceMeshCylinder.GetIndexCount(0) : 0;
+        numIndices = m_boidInstanceMesh ? m_boidInstanceMesh.GetIndexCount(0) : 0;
         //GetIndexCount(submesh = 0)
 
 
         m_boidLEDArgs[0] = numIndices;  // the number of indices in the set of triangles
 
-        m_boidLEDArgs[1] = (uint) m_totalNumOfLEDs; // the number of instances
+        // m_boidLEDArgs[1] = (uint) m_totalNumOfLEDs; // the number of instances
 
+        m_boidLEDArgs[1] = (uint)m_LEDColorGenController.m_totalNumOfLEDs; // the number of instances
         m_boidLEDArgsBuffer.SetData( m_boidLEDArgs) ;
 
 
@@ -431,9 +439,8 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
         m_boidLEDInstanceMaterial.SetVector("CeilingMaxCorner", m_boids.CeilingMaxCorner);
         m_boidLEDInstanceMaterial.SetVector("CeilingMinCorner", m_boids.CeilingMinCorner);
 
-        // m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_LEDColorGenController.m_BoidLEDBuffer);
+        m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_LEDColorGenController.m_BoidLEDBuffer);
 
-        m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_BoidLEDBuffer);
 
     } // Start()
 
@@ -474,7 +481,7 @@ public class BoidLEDRendererTreeOfVoiceTest : MonoBehaviour
 
 
         Graphics.DrawMeshInstancedIndirect(
-             m_instanceMeshCylinder,
+             m_boidInstanceMesh,
 
             0,
             m_boidLEDInstanceMaterial, // This material defines the shader which receives instanceID

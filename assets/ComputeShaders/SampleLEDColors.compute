@@ -207,6 +207,8 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 		//_BoidLEDBuffer[pId].color = float4(1.0, 1.0, 1.0, 1.0);
 		//pBoidLED.color = float4(0.0, 0.0, 0.0, 1.0);
 
+		/*_BoidLEDBuffer[pId].position = _BoidBuffer[minIndex].position;
+		_BoidLEDBuffer[pId].headDir = _BoidBuffer[minIndex].headDir;*/
 		_BoidLEDBuffer[pId].color = _BoidBuffer[minIndex].color;
 		_BoidLEDBuffer[pId].nearestBoidID = minIndex;
 

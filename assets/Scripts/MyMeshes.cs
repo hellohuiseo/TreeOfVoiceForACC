@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
  
-public class MeshCreator //: MonoBehaviour
+public class CircleMesh //: MonoBehaviour
 {
 
-    Mesh m_mesh;
+    public Mesh m_mesh;
 
     Vector2[] m_vertices;
     Vector3[] m_vertices3D;
@@ -15,34 +15,13 @@ public class MeshCreator //: MonoBehaviour
     
     const float M_PI = 3.1415926535897932384626433832795f;
 
-    // Structures for Cyliner Mesh
-    [System.Serializable]
-    public struct CylinderParam
-    {
-        // The parameters of a cylinder 
-   
-        public int nbSides;
-        public int nbHeightSeg; // Not implemented yet
-
-    }
-
-    int nbVerticesCap;
-    float bottomRadius;
-    float topRadius;
-
-
-      
-  
-
-
-
-    public MeshCreator()
+    
+    
+    public CircleMesh(float radius)
     {
         m_mesh = new Mesh();
-    }
+   
 
-    public  Mesh CreateCircleMesh(float radius)
-    {
         m_vertices = FindPointsOnCircle( radius); // 2D circle on xz plane
 
 
@@ -63,9 +42,8 @@ public class MeshCreator //: MonoBehaviour
         m_mesh.RecalculateNormals();
         m_mesh.RecalculateBounds();
 
-        return m_mesh;
 
-    }
+    } // CircleMesh constructor
 
 
     public  Vector2[] FindPointsOnCircle(float radius)
@@ -195,16 +173,29 @@ public class MeshCreator //: MonoBehaviour
 
         return ((aCROSSbp >= 0.0f) && (bCROSScp >= 0.0f) && (cCROSSap >= 0.0f));
     }
+} // CircleMesh  class
 
-    public Mesh CreateCylinderMesh(  float height, float radius,int  nbSides,
-                                     int nbHeightSeg // Not implemented yet
-     )
+public class CylinderMesh
+{
+    public Mesh m_mesh;
+
+    public CylinderMesh(float height, float radius, int nbSides,
+                                         int nbHeightSeg  )
     {
 
+        m_mesh = new Mesh();
 
-        #region Vertices
+        // Structures for Cyliner Mesh
+  
 
-        nbVerticesCap = nbSides + 1;
+    int nbVerticesCap;
+    float bottomRadius;
+    float topRadius;
+
+
+    #region Vertices
+
+    nbVerticesCap = nbSides + 1;
         bottomRadius = radius;
         topRadius = radius;
 
@@ -228,7 +219,7 @@ public class MeshCreator //: MonoBehaviour
         vertices[vert++] = new Vector3(0f, height, 0f);
         while (vert <= nbSides * 2 + 1)
         {
-            float rad = (float)(vert -nbSides - 1) / nbSides * _2pi;
+            float rad = (float)(vert - nbSides - 1) / nbSides * _2pi;
             vertices[vert] = new Vector3(Mathf.Cos(rad) * topRadius,
                                         height, Mathf.Sin(rad) * topRadius);
             vert++;
@@ -387,9 +378,8 @@ public class MeshCreator //: MonoBehaviour
         m_mesh.RecalculateNormals();
         m_mesh.RecalculateBounds();
 
-        return m_mesh;
-    }// public Mesh CreateCylinderMesh(  float height, float radius)
+    }// public CylinderMesh constructor
 
+} // CylinderMesh class
 
-} // class MeshCreator
 

@@ -1,4 +1,4 @@
-﻿Shader "Custom/2D3DBoidsShaderMultiLights" {
+﻿Shader "Custom/BoidLEDCylinderShader" {
 	//The Properties block contains shader variables (textures, colors etc.) 
 	//that will be saved as part of the Material, and displayed in the material inspector.
     Properties {
@@ -104,14 +104,26 @@
 
 		     float  radius; // the radius of a circle boid
 			 float3 colorHSV;
-		     float4 colorRGB;         // RGBA color
+		     float4 color;         // RGBA color
 		     float2 soundGrain; //        the freq (pitch) and amp of the boid sound grain
 		     float duration; //   the duration of the boid for one frame. 
 		     int   wallNo;    // tfloat2  position; // the position of a boid
 			 		
             };
-            
-			
+    //        
+
+			struct BoidLEDData
+			{
+				float3  position; //
+				float3  headDir; // heading direction of the boid on the local plane
+				float4  color;         // RGBA color
+				float3  scale;
+				int    wallNo;      // the number of the wall whose boids defined the light sources of the branch cylinder
+										// 0=> the inner  circular wall. 
+										// 1 => the outer circular wall;
+				int    nearestBoidID;
+			};
+
 
             sampler2D _MainTex;
             //float2 _Scale; // scale factor on x-z plane
@@ -125,6 +137,8 @@
 
 			float3 _Scale;
 
+			int _BoidOrLED;
+
 			int   _BloidsNum;
 			float _CohesionRadius;
 
@@ -132,8 +146,8 @@
 			//float   Use3DBoids;
 
         #if SHADER_TARGET >= 45
-            //RWStructuredBuffer<Boid> _BoidBuffer;	 // RW buffer does not work
-		    StructuredBuffer<Boid> _BoidBuffer;	
+            StructuredBuffer<Boid> _BoidBuffer;	
+			StructuredBuffer<BoidLEDData> _BoidLEDBuffer;
         #endif
 
             struct v2f
@@ -334,9 +348,13 @@
 
 				////////////////////////////////
            // #if SHADER_TARGET >= 45
-                Boid b = _BoidBuffer[instanceID];
-                	
-				int wallNo = b.wallNo;
+								
+
+				BoidLEDData b = _BoidLEDBuffer[instanceID];
+
+				//int wallNo = b.wallNo;
+				int wallNo = 1; // Boid LEDs are on the ceiling;
+
 
 				float3 wallOrigin = float3(0.0, 0.0, 0.0); // used to determine the origin of the boid frame
 				//float3 eulerAngles; // ZXY Euler angles
@@ -372,9 +390,14 @@
 
 				}
 
-				float3 boidLoc = wallOrigin + b.position;
 
-				float3 scale = b.scale;
+				float3 boidLoc;
+				float3 scale;
+
+				boidLoc = wallOrigin + b.position;
+
+				scale = b.scale;
+
 
 				// The boid's head is assumed to be aligned with the z axis. 
 				// There is no roll motion about the z axis, only the pitch about the x axis
@@ -386,8 +409,14 @@
 
 				// if headDir.y ==0 (boid on 2D xz plane) => rotX =0. Only yaw on xz plane
 
-				float rotX = -asin(b.headDir.y / length(b.headDir.xyz) + 1e-8); // 0으로 나누기 방지
-				float rotY = atan2(b.headDir.x, b.headDir.z); // rotY is the angle between z axis and the
+				float rotX;
+				float rotY;
+
+				
+
+					rotX = -asin(b.headDir.y / length(b.headDir.xyz) + 1e-8); // 0으로 나누기 방지
+					rotY = atan2(b.headDir.x, b.headDir.z); // rotY is the angle between z axis and the
+
 				// projection of the boid dir on the xz plane; it is the angle about the y axis
 
 				// R = Ry * Rx * Rz 
@@ -445,7 +474,10 @@
     //            o.diff = nl * _LightColor0.rgb; // this is the diffuse color of the surface point
     //            o.ambient = ShadeSH9( half4(o.normal.xyz, 1) );
 				//
-				o.color = b.colorRGB; // set the color of the boid mesh instance to each vertex of the mesh:
+				
+				o.color = b.color;
+
+
 				//               // A fish mesh will have the same color on the whole of its surface.
 				//               // This color is interpreted as the reflection cofficient in the shading process
 				//               // in the fragment shader frag()

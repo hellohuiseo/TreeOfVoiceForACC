@@ -151,6 +151,7 @@ public class LEDColorGenController : MonoBehaviour
 
     private void Awake()
     {// initialize me
+
         m_totalNumOfLEDs = m_numOfChain1 + m_numOfChain2 + m_numOfChain3 + m_numOfChain4;
 
         m_startAngleOfChain1 = m_beginFromInChain1  * M_PI / 180; // degree
@@ -223,7 +224,25 @@ public class LEDColorGenController : MonoBehaviour
         m_BoidLEDBuffer.SetData(m_BoidLEDArray); // buffer is R or RW
 
         m_BoidLEDComputeShader.SetBuffer(m_kernelIDLED, "_BoidLEDBuffer", m_BoidLEDBuffer);
-       // m_BoidLEDComputeShader.SetBuffer(m_kernelIDLED, "_BoidLEDRenderDebugBuffer", m_BoidLEDRenderDebugBuffer);
+
+
+
+        Debug.Log("In Awake() in LEDColorGenController:");
+
+        for (int i = 0; i < m_totalNumOfLEDs; i++)
+        {
+            m_LEDArray[i * 3] = (byte)(255 * m_BoidLEDArray[i].Color[0]); // Vector4 Color
+            m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
+            m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
+
+            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+            Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+
+        }
+
+
+        // m_BoidLEDComputeShader.SetBuffer(m_kernelIDLED, "_BoidLEDRenderDebugBuffer", m_BoidLEDRenderDebugBuffer);
 
         //m_BoidLEDComputeShader.SetBuffer(m_kernelIDLED, "_BoidLEDRenderDebugBuffer0", m_BoidLEDRenderDebugBuffer0);
     } // Awake()
@@ -478,7 +497,7 @@ public class LEDColorGenController : MonoBehaviour
 
         m_BoidLEDBuffer.GetData(m_BoidLEDArray); // Get the boidLED data to send to the arduino
 
-        Debug.Log("BoidLEDRender Debug");
+        // Debug.Log("BoidLEDRender Debug");
 
 
 
@@ -486,27 +505,27 @@ public class LEDColorGenController : MonoBehaviour
         //_BoidLEDRenderDebugBuffer0[pId][1] = minDist;
         //_BoidLEDRenderDebugBuffer0[pId][2] = neighborCnt;
 
-       // for (int i = 0; i < m_totalNumOfLEDs; i++)
+        // for (int i = 0; i < m_totalNumOfLEDs; i++)
 
 
         //{
-           // Debug.Log(i + "th boid LED ID =" + m_ComputeBufferArray[i].BoidLEDID);
-            //Debug.Log(i + "th boid LED (min index) Nearest Neighbor ID=" + m_ComputeBufferArray[i].NearestBoidID);
-            //Debug.Log(i + "th boid LED Neighbor Count=" + m_ComputeBufferArray[i].NeighborCount);
-            //Debug.Log(i + "th boid LED Neighbor Radius=" + m_ComputeBufferArray[i].NeighborRadius);
-            //Debug.Log(i + "th boid LED Nearest Neighbor Color=" + m_ComputeBufferArray[i].NearestBoidColor);
-            //Debug.Log(i + "th boid LED Avg Color:" + m_ComputeBufferArray[i].AvgColor);
+        // Debug.Log(i + "th boid LED ID =" + m_ComputeBufferArray[i].BoidLEDID);
+        //Debug.Log(i + "th boid LED (min index) Nearest Neighbor ID=" + m_ComputeBufferArray[i].NearestBoidID);
+        //Debug.Log(i + "th boid LED Neighbor Count=" + m_ComputeBufferArray[i].NeighborCount);
+        //Debug.Log(i + "th boid LED Neighbor Radius=" + m_ComputeBufferArray[i].NeighborRadius);
+        //Debug.Log(i + "th boid LED Nearest Neighbor Color=" + m_ComputeBufferArray[i].NearestBoidColor);
+        //Debug.Log(i + "th boid LED Avg Color:" + m_ComputeBufferArray[i].AvgColor);
 
-            //Debug.Log(i + "th boid LED min Index [ver0] =" + m_ComputeBufferArray0[i][0]);
-            //Debug.Log(i + "th boid LED min Dist [ver0]=" + m_ComputeBufferArray0[i][1] );
-            //Debug.Log(i + "th boid LED Neighbor Count [ver0]=" + m_ComputeBufferArray0[i][2]);
+        //Debug.Log(i + "th boid LED min Index [ver0] =" + m_ComputeBufferArray0[i][0]);
+        //Debug.Log(i + "th boid LED min Dist [ver0]=" + m_ComputeBufferArray0[i][1] );
+        //Debug.Log(i + "th boid LED Neighbor Count [ver0]=" + m_ComputeBufferArray0[i][2]);
 
-            //Debug.Log(i + "th boid LED Nearest Boid ID [m_BoidLEDBuffer] =" + m_BoidLEDArray[i].NearestBoidID);
-            //Debug.Log(i + "th boid LED Nearest Boid Color [m_BoidLEDBuffer] =" + m_BoidLEDArray[i].Color);
-            
+        //Debug.Log(i + "th boid LED Nearest Boid ID [m_BoidLEDBuffer] =" + m_BoidLEDArray[i].NearestBoidID);
+        //Debug.Log(i + "th boid LED Nearest Boid Color [m_BoidLEDBuffer] =" + m_BoidLEDArray[i].Color);
 
 
-       // }
+
+        // }
 
 
         // Each thread group, e.g.  SV_GroupID = (0,0,0) will contain BLOCK_SIZE * 1 * 1 threads according to the
@@ -520,7 +539,7 @@ public class LEDColorGenController : MonoBehaviour
 
         // debugging
 
-      
+
 
         //m_BoidLEDBuffer.GetData(m_BoidLEDArray); // Get the boidLED data to send to the arduino
 
@@ -528,13 +547,17 @@ public class LEDColorGenController : MonoBehaviour
 
         // Copy m_BoidLEDArray to m_LEDArray to send them to the master Arduino via serial communication.
 
+
+        Debug.Log("In Update() in LEDColorGenController:");
+
         for (int i = 0; i < m_totalNumOfLEDs; i++)
         {
             m_LEDArray[i * 3] = (byte)(255 * m_BoidLEDArray[i].Color[0]); // Vector4 Color
             m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
             m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
 
-            //Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
 
             //Debug.Log(i + "th LED Color (value range check) from m_boids.m_boidArray" 
             //    + m_boids.m_boidArray[  m_BoidLEDArray[i].NearestBoidID ].Color );
