@@ -330,7 +330,7 @@ public class LEDColorGenController : MonoBehaviour
                                                  Random.Range(m_minLEDInterval, m_maxLEDInterval),  i);
             float r_i = a1 * Mathf.Exp(b1 * th_i );
 
-            float th_i_g = th_i + m_beginFromInChain1 * 180 / M_PI;
+            float th_i_g = th_i + m_startAngleOfChain1 ;
 
             Debug.Log(i + "th LED Ploar POS (th,r) [global coord]:" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
 
@@ -338,9 +338,10 @@ public class LEDColorGenController : MonoBehaviour
 
             Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
 
-            Vector3 ledPos = r_i * headDir;                           
+            Vector3 ledPos = r_i * headDir;
 
-             m_BoidLEDArray[i].Position = ledPos;
+            m_BoidLEDArray[i].HeadDir = headDir;
+            m_BoidLEDArray[i].Position = ledPos;
 
 
             float initScaleX = Random.Range(0.7f, 1.0f); // 0.5 ~ 1.0
@@ -393,7 +394,7 @@ public class LEDColorGenController : MonoBehaviour
                                                  Random.Range(m_minLEDInterval, m_maxLEDInterval),  i);
             float r_i = a2 * Mathf.Exp(b2 * th_i);
 
-            float th_i_g = th_i + m_beginFromInChain2 * 180 / M_PI;
+            float th_i_g = th_i + m_startAngleOfChain1;
 
             Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
 
@@ -403,6 +404,8 @@ public class LEDColorGenController : MonoBehaviour
             Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
 
             Vector3 ledPos = r_i * headDir ;
+
+            m_BoidLEDArray[m_firstPartOfInnerChain + m_secondPartOfInnerChain + i].HeadDir = headDir;
 
             m_BoidLEDArray[m_firstPartOfInnerChain + m_secondPartOfInnerChain + i].Position = ledPos;
 
