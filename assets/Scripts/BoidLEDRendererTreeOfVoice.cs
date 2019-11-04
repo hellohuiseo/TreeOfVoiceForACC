@@ -26,11 +26,15 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     CylinderMesh m_instanceMeshCylinder;
     Mesh m_boidInstanceMesh;
 
-    public float m_cylinderHeight = 10; // m; scale = 0.1 ~ 0.3
-    public float m_cylinderRadius = 0.1f; // 0.1 m =10cm
+    public float m_ceilingHeight = 4.5f; 
+    //public float m_innerCylinderHeightScale = 4.5f; // 4.5 m; Unit Hight = 1 m
+    //public float m_outerCylinderHeightScale = 2.5f; // 4.5 m; Unit Hight = 1 m
+
+    public float m_cylinderRadiusScale = 0.05f; // 5cm
+    float m_unitHeight = 1.0f;
 
     public float m_scale = 1.0f; // the scale of the instance mesh
-      
+
     ComputeBuffer m_boidLEDArgsBuffer;
      
     uint[] m_boidLEDArgs = new uint[5] { 0, 0, 0, 0, 0 };
@@ -78,7 +82,7 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
                
     
 
-        m_instanceMeshCylinder =  new CylinderMesh(m_cylinderHeight, m_cylinderRadius, nbSides, nbHeightSeg);
+        m_instanceMeshCylinder =  new CylinderMesh(m_unitHeight, m_cylinderRadiusScale, nbSides, nbHeightSeg);
 
         m_boidInstanceMesh = m_instanceMeshCylinder.m_mesh;
 
@@ -125,6 +129,10 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
         //m_boidLEDInstanceMaterial.SetInt("_BoidOrLED", 0); // Boid
         //m_boidLEDInstanceMaterial.SetInt("_BoidOrLED", 1); // LED
+
+
+        m_boidLEDInstanceMaterial.SetFloat("_CeilingHeight", m_ceilingHeight );
+
         m_boidLEDInstanceMaterial.SetVector("_Scale", new Vector3(m_scale, m_scale, m_scale));
 
         m_boidLEDInstanceMaterial.SetVector("GroundMaxCorner", m_boids.GroundMaxCorner);
@@ -135,7 +143,7 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
 
         m_boidLEDInstanceMaterial.SetBuffer("_BoidLEDBuffer", m_LEDColorGenController.m_BoidLEDBuffer);
 
-        m_boidLEDInstanceMaterial.SetBuffer("_BoidBuffer", m_boids.m_BoidBuffer);
+        //m_boidLEDInstanceMaterial.SetBuffer("_BoidBuffer", m_boids.m_BoidBuffer);
 
 
         //"_BoidLEDBuffer" is computed   // m_LEDColorGenController.m_BoidLEDBuffer is ready in and AWake() and Update() of m_LEDColorGenController.

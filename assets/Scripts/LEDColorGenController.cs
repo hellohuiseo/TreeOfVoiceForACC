@@ -72,11 +72,12 @@ public class LEDColorGenController : MonoBehaviour
     public SimpleBoidsTreeOfVoice m_boids;
     // 보이드의 수
     public float m_BoidsNum;
+
     public int m_totalNumOfLEDs;
 
     public int m_samplingWall = 1; // ceiling
 
-    public float m_samplingRadius = 2; //m
+    public float m_samplingRadius = 3; //m
   
     public int m_numberOfWalls =2;
 
@@ -102,32 +103,28 @@ public class LEDColorGenController : MonoBehaviour
 
     float m_LEDChainLength = 0;
 
-
-   // public BoidData[] m_boidArray;
-
-    // Areas of LED lights and person
-
-    // public float m_personSpaceDepth = 1; // 1m
-    //public float m_personSpaceWidth = 0.5f; // m
-
-    //public float m_personSpaceAngle = 20; // deg
-    public float m_innerCircleRadius = 1; // m
-    public float m_outerCircleRadius = 2;
-
    
+    public float m_startingRadiusOfInnerChain = 0.7f; // m
+    public float m_endingRadiusOfInnerChainThreeTurns = 1f;
+
+    public float m_startingRadiusOfOuterChain = 1.7f; // m
+    public float m_endingRadiusOfOuterChainThreeTurns = 2f;
+
+
     //cf.  public float CeilingInnerRadius = 0.7f;
 
-    public int m_numOfChain1 = 40;
-    public int m_numOfChain2 = 40;
-    public int m_numOfChain3 = 60;
-    public int m_numOfChain4 = 60;
+    public int m_firstPartOfInnerChain = 40;
+    public int m_secondPartOfInnerChain = 40;
+    public int m_firstPartOfOuterChain = 60;
+    public int m_secondPartOfOuterChain = 60;
 
-    public float m_beginFromInChain1 = -80;
-    public float m_beginFromInChain2 = -70;
-    
-   
+    public float m_beginFromInChain1 = -135f;
+    public float m_beginFromInChain2 = -70f;
 
-    float m_startAngleOfChain1;
+    public float m_innerCylinderHeightScale = 4.5f; // 4.5 m; Unit Hight = 1 m
+    public float m_outerCylinderHeightScale = 2.5f; // 4.5 m; Unit Hight = 1 m
+
+    float m_startAngleOfChain1; // this is the angle where r0, that is, a0 is defined, that is, on the local x axis
     float m_startAngleOfChain2;
 
 
@@ -152,7 +149,8 @@ public class LEDColorGenController : MonoBehaviour
     private void Awake()
     {// initialize me
 
-        m_totalNumOfLEDs = m_numOfChain1 + m_numOfChain2 + m_numOfChain3 + m_numOfChain4;
+        m_totalNumOfLEDs = m_firstPartOfInnerChain  + m_secondPartOfInnerChain
+                          + m_firstPartOfOuterChain + m_secondPartOfOuterChain;
 
         m_startAngleOfChain1 = m_beginFromInChain1  * M_PI / 180; // degree
         m_startAngleOfChain2 = m_beginFromInChain2 *  M_PI / 180; // degree
@@ -303,11 +301,11 @@ public class LEDColorGenController : MonoBehaviour
 
         //Define the parameters  a and b of the logarithmic spiral curve r = a * exp(b * th).
 
-        float r0 = 1.0f;  // a1  in r = a1 * exp(b1 * th) is set so that the radius r0 is 0.7 when th =0;
-        float r1 = 2.0f; // r1 = a1 exp (b1* 3 * 2pi)
+        float r0 = m_startingRadiusOfInnerChain;  // a1  in r = a1 * exp(b1 * th) is set so that the radius r0 is 0.7 when th =0;
+        float r1 = m_endingRadiusOfInnerChainThreeTurns; // r1 = a1 exp (b1* 3 * 2pi)
 
-        float r2 = 3.0f; //  a2  in r = a2 * exp( b2 * th); b2 is set so that r is r2 when th =0;
-        float r3 = 4.0f; // r3 = a2* exp(b2* 3 * 2pi)
+        float r2 = m_startingRadiusOfOuterChain; ; //  a2  in r = a2 * exp( b2 * th); b2 is set so that r is r2 when th =0;
+        float r3 = m_endingRadiusOfOuterChainThreeTurns; // r3 = a2* exp(b2* 3 * 2pi)
 
         float a1 = r0;
         float b1 = Mathf.Log(r1 / a1) / (6 * M_PI);
@@ -322,29 +320,34 @@ public class LEDColorGenController : MonoBehaviour
 
         m_LEDChainLength = 0;
 
-        for (int i = 0; i < m_numOfChain1 + m_numOfChain2; i++ )
+        for (int i = 0; i < m_firstPartOfInnerChain + m_secondPartOfInnerChain; i++ )
         {
             // set the head direction of the boid:  direction angle on xz plane
 
-            float th_i = GetAngularPositionOfLED(a1, b1, m_startAngleOfChain1, ref m_LEDChainLength,
+            //  thi_i: the angle on the local coordinate system:
+
+            float th_i = GetAngularPositionOfLED(a1, b1, 0.0f, ref m_LEDChainLength,
                                                  Random.Range(m_minLEDInterval, m_maxLEDInterval),  i);
-            float r_i = a1 * Mathf.Exp(b1 * th_i);
+            float r_i = a1 * Mathf.Exp(b1 * th_i );
 
-            Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i * 180 / M_PI, r_i).ToString("F4"));
+            float th_i_g = th_i + m_beginFromInChain1 * 180 / M_PI;
 
-            m_BoidLEDArray[i].HeadDir = new Vector3(Mathf.Cos(th_i), 0.0f, Mathf.Sin(th_i));
+            Debug.Log(i + "th LED Ploar POS (th,r) [global coord]:" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
 
-            Debug.Log(i + "th LED HeadDir:" + m_BoidLEDArray[i].HeadDir.ToString("F4") );
-            Vector3 ledPos = r_i * m_BoidLEDArray[i].HeadDir;                         
+            Vector3 headDir = new Vector3(Mathf.Cos(th_i_g), 0.0f, Mathf.Sin(th_i_g));
+
+            Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
+
+            Vector3 ledPos = r_i * headDir;                           
 
              m_BoidLEDArray[i].Position = ledPos;
 
 
-            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
-            //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
-            //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
+            float initScaleX = Random.Range(0.7f, 1.0f); // 0.5 ~ 1.0
+            float initScaleY = Random.Range(0.9f * m_innerCylinderHeightScale , m_innerCylinderHeightScale);
+            float initScaleZ = Random.Range(0.7f, 1.0f);
                        
-            m_BoidLEDArray[i].Scale = new Vector3(initScaleX, initScaleX, initScaleX); 
+            m_BoidLEDArray[i].Scale = new Vector3(initScaleX, initScaleY, initScaleZ); 
 
             Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
         } // for  (int i )
@@ -382,31 +385,35 @@ public class LEDColorGenController : MonoBehaviour
         Debug.Log("Outer Chain:");
         m_LEDChainLength = 0;
 
-        for (int i = 0; i < m_numOfChain3 + m_numOfChain4; i++)
+        for (int i = 0; i < m_firstPartOfOuterChain + m_secondPartOfOuterChain; i++)
         {
             // set the head direction of the boid:  direction angle on xz plane
 
-            float th_i = GetAngularPositionOfLED(a2, b2, m_startAngleOfChain2, ref m_LEDChainLength,
+            float th_i = GetAngularPositionOfLED(a2, b2, 0.0f, ref m_LEDChainLength,
                                                  Random.Range(m_minLEDInterval, m_maxLEDInterval),  i);
             float r_i = a2 * Mathf.Exp(b2 * th_i);
 
-            Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i * 180 / M_PI, r_i).ToString("F4"));
+            float th_i_g = th_i + m_beginFromInChain2 * 180 / M_PI;
 
-            m_BoidLEDArray[m_numOfChain1 + m_numOfChain2 + i].HeadDir = new Vector3(Mathf.Cos(th_i), 0.0f, Mathf.Sin(th_i));
+            Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
+
+            Vector3 headDir  = new Vector3(Mathf.Cos(th_i_g), 0.0f, Mathf.Sin(th_i_g));
 
 
-            Debug.Log(i + "th LED HeadDir:" + m_BoidLEDArray[m_numOfChain1 + m_numOfChain2 +i].HeadDir.ToString("F4"));
+            Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
 
-            Vector3 ledPos = r_i * m_BoidLEDArray[m_numOfChain1 + +m_numOfChain2  +i].HeadDir;
+            Vector3 ledPos = r_i * headDir ;
 
-            m_BoidLEDArray[m_numOfChain1 + m_numOfChain2  + i].Position = ledPos;
+            m_BoidLEDArray[m_firstPartOfInnerChain + m_secondPartOfInnerChain + i].Position = ledPos;
 
-            float initScaleX = Random.Range(MinCylinderRadiusScale, MaxCylinderRadiusScale); // 0.5 ~ 1.0
-                                                                                   //float initScaleY = Random.Range(MinCylinderRadius, MaxCylinderRadius);
-                                                                                   //float initScaleZ = Random.Range(MinCylinderRadius, MaxCylinderRadius);
 
-            m_BoidLEDArray[m_numOfChain1 + m_numOfChain2 + i].Scale = new Vector3(initScaleX, initScaleX, initScaleX);              
+            float initScaleX = Random.Range(0.7f, 1.0f); // 0.5 ~ 1.0
+            float initScaleY = Random.Range(0.9f * m_outerCylinderHeightScale, m_outerCylinderHeightScale);
+            float initScaleZ = Random.Range(0.7f, 1.0f);
 
+            m_BoidLEDArray[m_firstPartOfInnerChain + m_secondPartOfInnerChain + i].Scale 
+                           = new Vector3(initScaleX, initScaleY, initScaleZ);
+                 
 
             Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
 
@@ -548,11 +555,11 @@ public class LEDColorGenController : MonoBehaviour
         // Copy m_BoidLEDArray to m_LEDArray to send them to the master Arduino via serial communication.
 
 
-        Debug.Log("In Update() in LEDColorGenController:");
+        //Debug.Log("In Update() in LEDColorGenController:");
 
         for (int i = 0; i < m_totalNumOfLEDs; i++)
         {
-            m_LEDArray[i * 3] = (byte)(255 * m_BoidLEDArray[i].Color[0]); // Vector4 Color
+            m_LEDArray[i * 3] =    (byte)(255 * m_BoidLEDArray[i].Color[0]); // Vector4 Color
             m_LEDArray[i * 3 + 1] = (byte)(255 * m_BoidLEDArray[i].Color[1]);
             m_LEDArray[i * 3 + 2] = (byte)(255 * m_BoidLEDArray[i].Color[2]);
 

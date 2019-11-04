@@ -41,6 +41,7 @@ struct BoidLEDData
 							// 0=> the inner  circular wall. 
 							// 1 => the outer circular wall;
 	 int nearestBoidID;
+	 int  neighborCount;
 };
 
 //
@@ -171,21 +172,21 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 			}
 
 
-			//weight = smoothstep(0.0, _SamplingRadius, dist); // smoothstep(x, a,b) clamps x between  a and b?
+			weight = smoothstep(0.0, _SamplingRadius, dist); // smoothstep(x, a,b) clamps x between  a and b?
 			//												 //x is clamped to the range [min,
 			//												 //max] and then the interpolation formula is evaluated :
 			//												 //-2 * ((x - min) / (max - min))3 + 3 * ((x - min) / (max - min))2
 
-			//if (weight < epsilon)
-			//{
-			//	weight = epsilon; // avoid too small a number for division
-			//}
+			if (weight < epsilon)
+			{
+				weight = epsilon; // avoid too small a number for division
+			}
 
-			////colorSum +=  (1 / weight) * nBoid.color ; // sum  diffVec's to compute the average sepration vector
+			colorSum +=  (1 / weight) * nBoid.color ; // sum  diffVec's to compute the average sepration vector
 
-			colorSum += nBoid.color;
+			//colorSum += nBoid.color;
 
-			//weightSum += (1 / weight);
+			weightSum += (1 / weight);
 
 			neighborCnt++;          // increament the separation neighor count
 
@@ -197,7 +198,7 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 
 	// The scan over the neighbots is finished
 
-	if (minIndex == -1)
+	if (minIndex == -1) // no boid within the sampling radius
 	{ // no near boid
 		_BoidLEDBuffer[pId].color = float4(0.0, 0.0, 0.0, 1.0);
 		//pBoidLED.color  = float4(1.0, 1.0, 1.0, 1.0);
@@ -209,7 +210,11 @@ void SampleLEDColors(uint3 DTid : SV_DispatchThreadID)
 
 		/*_BoidLEDBuffer[pId].position = _BoidBuffer[minIndex].position;
 		_BoidLEDBuffer[pId].headDir = _BoidBuffer[minIndex].headDir;*/
-		_BoidLEDBuffer[pId].color = _BoidBuffer[minIndex].color;
+		//_BoidLEDBuffer[pId].color = _BoidBuffer[minIndex].color;
+		//_BoidLEDBuffer[pId].color = colorSum / (float)neighborCnt;
+
+		_BoidLEDBuffer[pId].color = colorSum / weightSum;
+
 		_BoidLEDBuffer[pId].nearestBoidID = minIndex;
 
 		/*_BoidLEDRenderDebugBuffer[pId].nearestBoidID = minIndex;

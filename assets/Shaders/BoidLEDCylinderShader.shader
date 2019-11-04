@@ -90,26 +90,26 @@
 
             #define M_PI 3.1415926535897932384626433832795
 
-            struct Boid 
-            {
-		     
-		     //float3 wallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
+    //        struct Boid 
+    //        {
+		  //   
+		  //   //float3 wallOrigin; // the reference position of the wall (the boid reference frame) on which the boid is 
 
-		    // float3  eulerAngles; // the rotation of the boid reference frame (ZXY - roll-pitch-yaw)
-		     float3  position; // the position of the  boid in the boid reference frame 	    
+		  //  // float3  eulerAngles; // the rotation of the boid reference frame (ZXY - roll-pitch-yaw)
+		  //   float3  position; // the position of the  boid in the boid reference frame 	    
 
-		     float3  scale;
-		     float3  headDir; // the head dir of the  boid on the local plane: 
-		     float speed;            // the speed of a boid
+		  //   float3  scale;
+		  //   float3  headDir; // the head dir of the  boid on the local plane: 
+		  //   float speed;            // the speed of a boid
 
-		     float  radius; // the radius of a circle boid
-			 float3 colorHSV;
-		     float4 color;         // RGBA color
-		     float2 soundGrain; //        the freq (pitch) and amp of the boid sound grain
-		     float duration; //   the duration of the boid for one frame. 
-		     int   wallNo;    // tfloat2  position; // the position of a boid
-			 		
-            };
+		  //   float  radius; // the radius of a circle boid
+			 //float3 colorHSV;
+		  //   float4 color;         // RGBA color
+		  //   float2 soundGrain; //        the freq (pitch) and amp of the boid sound grain
+		  //   float duration; //   the duration of the boid for one frame. 
+		  //   int   wallNo;    // tfloat2  position; // the position of a boid
+			 //		
+    //        };
     //        
 
 			struct BoidLEDData
@@ -146,7 +146,7 @@
 			//float   Use3DBoids;
 
         #if SHADER_TARGET >= 45
-            StructuredBuffer<Boid> _BoidBuffer;	
+           // StructuredBuffer<Boid> _BoidBuffer;	
 			StructuredBuffer<BoidLEDData> _BoidLEDBuffer;
         #endif
 

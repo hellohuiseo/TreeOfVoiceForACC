@@ -190,7 +190,7 @@ public class LEDMasterController : MonoBehaviour
                 color[2] = m_LEDArray[3 * i + 2];
 
 
-                Debug.Log(i +  "th LED color:" + color);
+                Debug.Log(" In UpdateLEDArray: Send: " + i +  "th LED color:" + color);
 
             }
 
