@@ -122,6 +122,7 @@
 										// 0=> the inner  circular wall. 
 										// 1 => the outer circular wall;
 				int    nearestBoidID;
+				int    neighborCount;
 			};
 
 
@@ -136,6 +137,7 @@
 			float3  CeilingMaxCorner;
 
 			float3 _Scale;
+			float  _CeilingHeight;
 
 			int _BoidOrLED;
 
@@ -372,7 +374,10 @@
 
 				if (wallNo == 1) // boid on the ceiling domain whose reference position is (0, CeilingMaxCorner.y, 0)
 				{
-					wallOrigin = float3 (0.0, CeilingMaxCorner.y, 0.0);
+					//wallOrigin = float3 (0.0, CeilingMaxCorner.y, 0.0);
+
+					 wallOrigin = float3 (0.0, _CeilingHeight, 0.0);
+					
 
 					//wallOrigin = float3 (0.0, 12.0, 0.0);
 					//eulerAngles = float3(M_PI, 0.0, 0.0); // pitch  = 180
