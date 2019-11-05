@@ -1281,10 +1281,12 @@ public class ActionPlanController : MonoBehaviour
 
         // set the sizes of the canvas, the scrollRect, and the content Rect
 
-        m_canvasHeight = (int)m_canvas.pixelRect.height; //The pixel size of the canvas is set to the resolution of the game view,
-        //                                // which is the target display of the Event Camera (Screen Space-Camera mode);
-                                          // We will change the canvas mode to WorldSpace later. But we will use this
-                                          // canvas size to set the size of the scrollView
+        m_canvasHeight = (int)m_canvas.pixelRect.height; 
+        
+        //The pixel size of the canvas is set to the resolution of the game view,
+        //  which is the target display of the Event Camera (Screen Space-Camera mode);
+         // We will change the canvas mode to WorldSpace later. But we will use this
+         // canvas size to set the size of the scrollView
         
         m_canvasWidth = (int)m_canvas.pixelRect.width;
 
@@ -1423,7 +1425,12 @@ public class ActionPlanController : MonoBehaviour
 
 
         m_scrollRectWidth = m_canvasWidth;
+        // m_scrollRectHeight = m_canvasHeight -(int) m_paramTextHeight;
         m_scrollRectHeight = m_canvasHeight;
+
+        // The scrollView contains the viewport and the horizotal and vertical bar; 
+        // Make space for the save and load buttons just below the scrollView
+        // within the canvas => Make the vertical size of the scrollView shorter.
 
         //m_scrollRectHeight = m_scrollRectHeight - (int) scrollBarHorizontalHeight;
         //m_scrollRectWidth = m_scrollRectWidth - (int) scrollBarVerticalWidth;
@@ -2739,18 +2746,14 @@ public class ActionPlanController : MonoBehaviour
             saveButtonTextObj.transform.SetParent(saveButtonObj.transform, false);
 
             saveButtonObj.AddComponent<RectTransform>();
-            saveButtonObj.AddComponent<CanvasRenderer>();
+            saveButtonObj.AddComponent<CanvasRenderer>(); // CanvasRenderer component is used to render Button
             saveButtonObj.AddComponent<Button>();
             saveButtonObj.layer = 5;
 
+          // save the saveButton to used by other components and places
+           m_saveButton = saveButtonObj.GetComponent<Button>();
 
-            m_saveButton = saveButtonObj.GetComponent<Button>();
-
-
-
-
-
-        //anchorMin: The normalized position in the parent RectTransform that the upper right corner of this Rect is anchored to.
+         //anchorMin: The normalized position in the parent RectTransform that the upper right corner of this Rect is anchored to.
         //anchorMin: The normalized position in the parent RectTransform that the lower left corner of this Rect is anchored to.
         saveButtonObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
         saveButtonObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
@@ -2759,19 +2762,28 @@ public class ActionPlanController : MonoBehaviour
         // m_timeTopBarContainer[0].GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
 
 
+        //  Set the pivot of this Rect ( m_timeTopBarContainer[0] Rect) relative to the anchor frame 
+        //  which is the left top of the ContentTitle Rect
+        //  saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(m_paramTextWidth, m_canvasHeight-m_paramTextHeight, 0.0f);
 
-
-        //  Set the pivot of this Rect ( m_timeTopBarContainer[0] Rect) relative to the anchor frame which is the left top of the ContentTitle Rect
         saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight-m_paramTextHeight, 0.0f);
-        saveButtonObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
+        //saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(m_paramTextWidth, m_canvasHeight-m_paramTextHeight, 0.0f);
 
+        saveButtonObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
+        //NOTE:
+
+        //m_scrollRectWidth = m_canvasWidth;
+        //m_scrollRectHeight = m_canvasHeight - (int)m_paramTextHeight;
+        //// The scrollView contains the viewport and the horizotal and vertical bar; 
+        //// Make space for the save and load buttons just below the scrollView
+        //// within the canvas => Make the vertical size of the scrollView shorter.
 
         saveButtonTextObj.layer = 5;
         saveButtonTextObj.AddComponent<RectTransform>();
         //m_textContainer[i][j].AddComponent<CanvasRenderer>();  // // canvasRender is added automatically
 
         saveButtonTextObj.AddComponent<Text>();
-
+        saveButtonTextObj.AddComponent<CanvasRenderer>();
 
         saveButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
         saveButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
@@ -2779,7 +2791,7 @@ public class ActionPlanController : MonoBehaviour
         saveButtonTextObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0.0f, 0.0f, 0.0f);
         // the center pivot position wrt its left top frame 
         saveButtonTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
-
+       
 
         String saveButtonLablel = "Save Action Plan";
 
@@ -2822,13 +2834,9 @@ public class ActionPlanController : MonoBehaviour
         loadButtonObj.AddComponent<Button>();
         loadButtonObj.layer = 5;
 
-
+        // save the loadButton to used by other components and places
         m_loadButton = loadButtonObj.GetComponent<Button>();
-
-
-
-
-
+                          
         //anchorMin: The normalized position in the parent RectTransform that the upper right corner of this Rect is anchored to.
         //anchorMin: The normalized position in the parent RectTransform that the lower left corner of this Rect is anchored to.
         loadButtonObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
@@ -2837,9 +2845,7 @@ public class ActionPlanController : MonoBehaviour
         //anchoredPosition:   The position of the left top pivot of this RectTransform relative to the left top anchor reference point.
         // m_timeTopBarContainer[0].GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
 
-
-
-
+               
         //  Set the pivot of this Rect ( m_timeTopBarContainer[0] Rect) relative to the anchor frame which is the left top of the ContentTitle Rect
         loadButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight - m_paramTextHeight, 0.0f);
         loadButtonObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
@@ -2851,7 +2857,7 @@ public class ActionPlanController : MonoBehaviour
 
         loadButtonTextObj.AddComponent<Text>();
 
-
+        loadButtonTextObj.AddComponent<CanvasRenderer>();
         loadButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
         loadButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
         loadButtonTextObj.GetComponent<RectTransform>().pivot = new Vector2(0, 1);

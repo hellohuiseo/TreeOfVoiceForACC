@@ -78,7 +78,7 @@ public class LEDColorGenController : MonoBehaviour
 
     public int m_samplingWall = 1; // ceiling
 
-    public float m_samplingRadius = 3; //m
+    public float m_samplingRadius = 1; //m
   
     public int m_numberOfWalls =2;
 
@@ -571,10 +571,10 @@ public class LEDColorGenController : MonoBehaviour
 
        
 
-                Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
-                Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
-                Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
-                Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
+                //Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+                //Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+                //Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+                //Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
 
         
 

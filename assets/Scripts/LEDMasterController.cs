@@ -189,8 +189,8 @@ public class LEDMasterController : MonoBehaviour
                 color[1] = m_LEDArray[3 * i + 1];
                 color[2] = m_LEDArray[3 * i + 2];
 
-
-                Debug.Log(" In UpdateLEDArray: Send: " + i +  "th LED color:" + color);
+                // yooJin: Uncomment the following for debugging
+                //Debug.Log(" In UpdateLEDArray: Send: " + i +  "th LED color:" + color);
 
             }
 
