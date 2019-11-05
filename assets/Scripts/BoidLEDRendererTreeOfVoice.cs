@@ -27,7 +27,6 @@ public class BoidLEDRendererTreeOfVoice : MonoBehaviour
     Mesh m_boidInstanceMesh;
 
     public float m_ceilingHeight = 4.5f; 
-
     //public float m_innerCylinderHeightScale = 4.5f; // 4.5 m; Unit Hight = 1 m
     //public float m_outerCylinderHeightScale = 2.5f; // 4.5 m; Unit Hight = 1 m
 
