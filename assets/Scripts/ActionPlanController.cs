@@ -1425,8 +1425,8 @@ public class ActionPlanController : MonoBehaviour
 
 
         m_scrollRectWidth = m_canvasWidth;
-        m_scrollRectHeight = m_canvasHeight -2 * (int) m_paramTextHeight;
-        //m_scrollRectHeight = m_canvasHeight;
+        // m_scrollRectHeight = m_canvasHeight -(int) m_paramTextHeight;
+        m_scrollRectHeight = m_canvasHeight;
 
         // The scrollView contains the viewport and the horizotal and vertical bar; 
         // Make space for the save and load buttons just below the scrollView
@@ -2739,22 +2739,18 @@ public class ActionPlanController : MonoBehaviour
          
         // Define save Buttons:
 
+   
+            GameObject saveButtonObj = new GameObject("Action Save Button");
+            GameObject saveButtonTextObj = new GameObject("Action  Button Text");
 
-        //GameObject saveButtonObj = new GameObject("Action Save Button");
-        //GameObject saveButtonTextObj = new GameObject("Action  Button Text");
+            saveButtonObj.transform.SetParent(m_contentObj.transform, false);
 
-        //saveButtonObj.transform.SetParent(m_canvasObj.transform, false);
+            saveButtonTextObj.transform.SetParent(saveButtonObj.transform, false);
 
-        //saveButtonTextObj.transform.SetParent(saveButtonObj.transform, false);
-
-        //        m_canvasObj = this.gameObject.transform.GetChild(0).gameObject;
-
-        GameObject saveButtonObj = m_canvasObj.transform.GetChild(1).gameObject;
-
-            //saveButtonObj.AddComponent<RectTransform>();
-            //saveButtonObj.AddComponent<CanvasRenderer>(); // CanvasRenderer component is used to render Button
-            //saveButtonObj.AddComponent<Button>();
-            //saveButtonObj.layer = 5;
+            saveButtonObj.AddComponent<RectTransform>();
+            saveButtonObj.AddComponent<CanvasRenderer>(); // CanvasRenderer component is used to render Button
+            saveButtonObj.AddComponent<Button>();
+            saveButtonObj.layer = 5;
 
           // save the saveButton to used by other components and places
            m_saveButton = saveButtonObj.GetComponent<Button>();
@@ -2772,7 +2768,7 @@ public class ActionPlanController : MonoBehaviour
         //  which is the left top of the ContentTitle Rect
         //  saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(m_paramTextWidth, m_canvasHeight-m_paramTextHeight, 0.0f);
 
-        saveButtonObj.GetComponent<RectTransform>().anchoredPosition3D = new Vector3(0, m_canvasHeight-m_paramTextHeight, -1);
+        saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight-m_paramTextHeight, 0.0f);
         //saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(m_paramTextWidth, m_canvasHeight-m_paramTextHeight, 0.0f);
 
         saveButtonObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
@@ -2784,65 +2780,61 @@ public class ActionPlanController : MonoBehaviour
         //// Make space for the save and load buttons just below the scrollView
         //// within the canvas => Make the vertical size of the scrollView shorter.
 
-        //saveButtonTextObj.layer = 5;
-        //saveButtonTextObj.AddComponent<RectTransform>();
-        ////m_textContainer[i][j].AddComponent<CanvasRenderer>();  // // canvasRender is added automatically
+        saveButtonTextObj.layer = 5;
+        saveButtonTextObj.AddComponent<RectTransform>();
+        //m_textContainer[i][j].AddComponent<CanvasRenderer>();  // // canvasRender is added automatically
 
-        //saveButtonTextObj.AddComponent<Text>();
-        //saveButtonTextObj.AddComponent<CanvasRenderer>();
+        saveButtonTextObj.AddComponent<Text>();
+        saveButtonTextObj.AddComponent<CanvasRenderer>();
 
-        //saveButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
-        //saveButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
-        //saveButtonTextObj.GetComponent<RectTransform>().pivot = new Vector2(0, 1);
-        //saveButtonTextObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0.0f, 0.0f, 0.0f);
-        //// the center pivot position wrt its left top frame 
-        //saveButtonTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
+        saveButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
+        saveButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
+        saveButtonTextObj.GetComponent<RectTransform>().pivot = new Vector2(0, 1);
+        saveButtonTextObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        // the center pivot position wrt its left top frame 
+        saveButtonTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
        
 
         String saveButtonLablel = "Save Action Plan";
 
         // set the properties of the textComponent Field of the input field
-        //saveButtonTextObj.GetComponent<Text>().supportRichText = false;
-        //saveButtonTextObj.GetComponent<Text>().color = new Color(0f, 0f, 0f);
+        saveButtonTextObj.GetComponent<Text>().supportRichText = false;
+        saveButtonTextObj.GetComponent<Text>().color = new Color(0f, 0f, 0f);
 
         //Font ArialFontField = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
         // text.font = ArialFont;
         // text.material = ArialFont.material;
 
 
-        //saveButtonTextObj.GetComponent<Text>().font = ArialFont;
-        //saveButtonTextObj.GetComponent<Text>().material = ArialFont.material;
+        saveButtonTextObj.GetComponent<Text>().font = ArialFont;
+        saveButtonTextObj.GetComponent<Text>().material = ArialFont.material;
 
-        //saveButtonTextObj.GetComponent<Text>().fontSize = 12;
-        //saveButtonTextObj.GetComponent<Text>().lineSpacing = 1;
-        //saveButtonTextObj.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-        //saveButtonTextObj.GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
-        //saveButtonTextObj.GetComponent<Text>().verticalOverflow = VerticalWrapMode.Overflow;
+        saveButtonTextObj.GetComponent<Text>().fontSize = 12;
+        saveButtonTextObj.GetComponent<Text>().lineSpacing = 1;
+        saveButtonTextObj.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+        saveButtonTextObj.GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
+        saveButtonTextObj.GetComponent<Text>().verticalOverflow = VerticalWrapMode.Overflow;
 
         // _textComponentField.horizontalOverflow = HorizontalWrapMode.Wrap;
         // _textComponentField.verticalOverflow = VerticalWrapMode.Truncate;
 
-        //saveButtonTextObj.GetComponent<Text>().text = saveButtonLablel;
+        saveButtonTextObj.GetComponent<Text>().text = saveButtonLablel;
 
-        // Button has a child gameObject called "Text" which has a Text Component.
-
-        saveButtonObj.transform.GetChild(0).gameObject.GetComponent<Text>().text = saveButtonLablel;
 
         // Define load Buttons:
 
-        GameObject loadButtonObj = m_canvasObj.transform.GetChild(2).gameObject;
 
-        //GameObject loadButtonObj = new GameObject("Load Save Button");
-        //GameObject loadButtonTextObj = new GameObject("Action  Button Text");
+        GameObject loadButtonObj = new GameObject("Load Save Button");
+        GameObject loadButtonTextObj = new GameObject("Action  Button Text");
 
-        //loadButtonObj.transform.SetParent(m_canvasObj.transform, false);
+        loadButtonObj.transform.SetParent(m_contentObj.transform, false);
 
-        //loadButtonTextObj.transform.SetParent(loadButtonObj.transform, false);
+        loadButtonTextObj.transform.SetParent(loadButtonObj.transform, false);
 
-        //loadButtonObj.AddComponent<RectTransform>();
-        //loadButtonObj.AddComponent<CanvasRenderer>();
-        //loadButtonObj.AddComponent<Button>();
-        //loadButtonObj.layer = 5;
+        loadButtonObj.AddComponent<RectTransform>();
+        loadButtonObj.AddComponent<CanvasRenderer>();
+        loadButtonObj.AddComponent<Button>();
+        loadButtonObj.layer = 5;
 
         // save the loadButton to used by other components and places
         m_loadButton = loadButtonObj.GetComponent<Button>();
@@ -2855,57 +2847,51 @@ public class ActionPlanController : MonoBehaviour
         //anchoredPosition:   The position of the left top pivot of this RectTransform relative to the left top anchor reference point.
         // m_timeTopBarContainer[0].GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
 
-
+               
         //  Set the pivot of this Rect ( m_timeTopBarContainer[0] Rect) relative to the anchor frame which is the left top of the ContentTitle Rect
-        loadButtonObj.GetComponent<RectTransform>().anchoredPosition3D= new Vector3(m_paramTextWidth, m_canvasHeight - m_paramTextHeight, -1);
-
-       // saveButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight - m_paramTextHeight, 0.0f);
-
-        //loadButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight - m_paramTextHeight, 0.0f);
+        loadButtonObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, m_canvasHeight - m_paramTextHeight, 0.0f);
         loadButtonObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
 
 
-        //loadButtonTextObj.layer = 5;
-        //loadButtonTextObj.AddComponent<RectTransform>();
-        ////m_textContainer[i][j].AddComponent<CanvasRenderer>();  // // canvasRender is added automatically
+        loadButtonTextObj.layer = 5;
+        loadButtonTextObj.AddComponent<RectTransform>();
+        //m_textContainer[i][j].AddComponent<CanvasRenderer>();  // // canvasRender is added automatically
 
-        //loadButtonTextObj.AddComponent<Text>();
+        loadButtonTextObj.AddComponent<Text>();
 
-        //loadButtonTextObj.AddComponent<CanvasRenderer>();
-        //loadButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
-        //loadButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
-        //loadButtonTextObj.GetComponent<RectTransform>().pivot = new Vector2(0, 1);
-        //loadButtonTextObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0.0f, 0.0f, 0.0f);
-        //// the center pivot position wrt its left top frame 
-        //loadButtonTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
-
-
-        String loadButtonLablel = "load Action Plan";
-
-        //// set the properties of the textComponent Field of the input field
-        //loadButtonTextObj.GetComponent<Text>().supportRichText = false;
-        //loadButtonTextObj.GetComponent<Text>().color = new Color(0f, 0f, 0f);
-
-        ////Font ArialFontField = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
-        //// text.font = ArialFont;
-        //// text.material = ArialFont.material;
+        loadButtonTextObj.AddComponent<CanvasRenderer>();
+        loadButtonTextObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
+        loadButtonTextObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
+        loadButtonTextObj.GetComponent<RectTransform>().pivot = new Vector2(0, 1);
+        loadButtonTextObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        // the center pivot position wrt its left top frame 
+        loadButtonTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(m_paramTextWidth, m_paramTextHeight);
 
 
-        //loadButtonTextObj.GetComponent<Text>().font = ArialFont;
-        //loadButtonTextObj.GetComponent<Text>().material = ArialFont.material;
+        String loadButtonLablel = "Save Action Plan";
 
-        //loadButtonTextObj.GetComponent<Text>().fontSize = 12;
-        //loadButtonTextObj.GetComponent<Text>().lineSpacing = 1;
-        //loadButtonTextObj.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-        //loadButtonTextObj.GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
-        //loadButtonTextObj.GetComponent<Text>().verticalOverflow = VerticalWrapMode.Overflow;
+        // set the properties of the textComponent Field of the input field
+        loadButtonTextObj.GetComponent<Text>().supportRichText = false;
+        loadButtonTextObj.GetComponent<Text>().color = new Color(0f, 0f, 0f);
 
-        //// _textComponentField.horizontalOverflow = HorizontalWrapMode.Wrap;
-        //// _textComponentField.verticalOverflow = VerticalWrapMode.Truncate;
+        //Font ArialFontField = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
+        // text.font = ArialFont;
+        // text.material = ArialFont.material;
 
-        loadButtonObj.transform.GetChild(0).gameObject.GetComponent<Text>().text = loadButtonLablel;
 
-        //loadButtonTextObj.GetComponent<Text>().text = loadButtonLablel;
+        loadButtonTextObj.GetComponent<Text>().font = ArialFont;
+        loadButtonTextObj.GetComponent<Text>().material = ArialFont.material;
+
+        loadButtonTextObj.GetComponent<Text>().fontSize = 12;
+        loadButtonTextObj.GetComponent<Text>().lineSpacing = 1;
+        loadButtonTextObj.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+        loadButtonTextObj.GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
+        loadButtonTextObj.GetComponent<Text>().verticalOverflow = VerticalWrapMode.Overflow;
+
+        // _textComponentField.horizontalOverflow = HorizontalWrapMode.Wrap;
+        // _textComponentField.verticalOverflow = VerticalWrapMode.Truncate;
+
+        loadButtonTextObj.GetComponent<Text>().text = loadButtonLablel;
 
 
     */
