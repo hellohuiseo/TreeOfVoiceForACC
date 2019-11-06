@@ -2735,6 +2735,8 @@ public class ActionPlanController : MonoBehaviour
         } //  for (int j = 1; j <= (int)(m_AnimationCycle/10); j++)
           //*** Vertical Lines***
 
+ /* Debugging
+         
         // Define save Buttons:
 
 
@@ -2905,6 +2907,8 @@ public class ActionPlanController : MonoBehaviour
 
         //loadButtonTextObj.GetComponent<Text>().text = loadButtonLablel;
 
+
+    */
                
     }//   void SetupActionPlanGUI()    
 
