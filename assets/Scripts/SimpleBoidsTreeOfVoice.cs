@@ -8,11 +8,6 @@ using System.Reflection;
 
 using Random = UnityEngine.Random;
 
-// This is it:
-//https://stackoverflow.com/questions/9088227/using-getopenfilename-instead-of-openfiledialog
-//https://docs.microsoft.com/en-us/previous-versions/dotnet/netframework-4.0/w5tyztk9(v=vs.100)?redirectedfrom=MSDN
-
-
 // Color: struct in UnityEngine
 // WOW: a Component is actually an instance of a class so the first step is to get a reference to the
 // Component instance you want to work with. This is done by GetComponent<>(): e,g Rigidbody rb = GetComponent<RigidBody>();

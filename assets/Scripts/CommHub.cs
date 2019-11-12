@@ -142,7 +142,7 @@ public class CommHub : MonoBehaviour
         if ( m_actionPlanController == null)
         {
             Debug.LogError(" m_actionPlanController should be set before use");
-            Application.Quit();
+           // Application.Quit();
         }
 
         m_actionPlan = m_actionPlanController.m_actionPlan;
@@ -166,22 +166,8 @@ public class CommHub : MonoBehaviour
 
         //In Update call  m_boidsController.SampleColorsAtLEDPoints
         //In Update call ledMasterController.SendLEDData
-
-        if ( m_actionPlanController.loadButton is  null)
-        {
-            Debug.LogError(" m_loadButton should be defined in actionPlanController.cs");
-             Application.Quit();
-        }
-
-        if (m_actionPlanController.saveButton is null )
-        {
-            Debug.LogError(" m_saveButton should be defined in actionPlanController.cs");
-            Application.Quit();
-        }
-
-
-
-        m_actionPlanController.loadButton.onClick.AddListener(m_actionPlanFileManager.LoadActionPlan ) ;
+        
+         m_actionPlanController.loadButton.onClick.AddListener(m_actionPlanFileManager.LoadActionPlan ) ;
 
          m_actionPlanController.saveButton.onClick.AddListener( m_actionPlanFileManager.SaveActionPlan) ;
                    

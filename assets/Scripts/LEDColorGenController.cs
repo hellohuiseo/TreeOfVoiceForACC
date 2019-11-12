@@ -232,15 +232,15 @@ public class LEDColorGenController : MonoBehaviour
 
         Debug.Log("In Awake() in LEDColorGenController:");
 
-        //for (int i = 0; i < m_totalNumOfLEDs; i++)
-        //{
+        for (int i = 0; i < m_totalNumOfLEDs; i++)
+        {
            
-        //    Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
-        //    Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
-        //    Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
-        //    Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
+            Debug.Log(i + "th LED Position" + m_BoidLEDArray[i].Position);
+            Debug.Log(i + "th LED HeadDir" + m_BoidLEDArray[i].HeadDir);
+            Debug.Log(i + "th LED Color" + m_BoidLEDArray[i].Color);
+            Debug.Log(i + "th LED Color: NeighborCount" + m_BoidLEDArray[i].NeighborCount);
 
-        //}
+        }
 
 
         // m_BoidLEDComputeShader.SetBuffer(m_kernelIDLED, "_BoidLEDRenderDebugBuffer", m_BoidLEDRenderDebugBuffer);
@@ -335,11 +335,11 @@ public class LEDColorGenController : MonoBehaviour
 
             float th_i_g = th_i + m_beginFromInChain1 * 180 / M_PI;
 
-            //Debug.Log(i + "th LED Ploar POS (th,r) [global coord]:" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
+            Debug.Log(i + "th LED Ploar POS (th,r) [global coord]:" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
 
             Vector3 headDir = new Vector3(Mathf.Cos(th_i_g), 0.0f, Mathf.Sin(th_i_g));
 
-           // Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
+            Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
 
             Vector3 ledPos = r_i * headDir;                           
 
@@ -352,7 +352,7 @@ public class LEDColorGenController : MonoBehaviour
                        
             m_BoidLEDArray[i].Scale = new Vector3(initScaleX, initScaleY, initScaleZ); 
 
-          //  Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
+            Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
         } // for  (int i )
 
         //Debug.Log("Second Chain:");
@@ -398,12 +398,12 @@ public class LEDColorGenController : MonoBehaviour
 
             float th_i_g = th_i + m_beginFromInChain2 * 180 / M_PI;
 
-           // Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
+            Debug.Log(i + "th LED Ploar POS (th,r):" + new Vector2(th_i_g * 180 / M_PI, r_i).ToString("F4"));
 
             Vector3 headDir  = new Vector3(Mathf.Cos(th_i_g), 0.0f, Mathf.Sin(th_i_g));
 
 
-           // Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
+            Debug.Log(i + "th LED HeadDir:" + headDir.ToString("F4"));
 
             Vector3 ledPos = r_i * headDir ;
 
@@ -418,7 +418,7 @@ public class LEDColorGenController : MonoBehaviour
                            = new Vector3(initScaleX, initScaleY, initScaleZ);
                  
 
-           // Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
+            Debug.Log(i + "th LED POS:" + ledPos.ToString("F4"));
 
         } // for  (int i )
 
@@ -608,11 +608,6 @@ public class LEDColorGenController : MonoBehaviour
 
         Debug.Log("LED Data Send Event Handler called in LEDColorGenController");
 
-        if ( m_LEDSenderHandler is null)
-        {
-            Debug.LogError(" Event Handler Methods should be added to m_LEDSenderHandler in CommHub.cs");
-            Application.Quit();
-        }
         m_LEDSenderHandler.Invoke( m_LEDArray) ;
 
  

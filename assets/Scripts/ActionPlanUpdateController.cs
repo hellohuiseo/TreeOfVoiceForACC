@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-//using System.Windows.Forms;
+using System.Windows.Forms;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -156,7 +156,7 @@ public class ActionPlanUpdateController: MonoBehaviour
 
     
 
-    //public string fileName = "dict.bin";
+    public string fileName = "dict.bin";
 
     //string dictPath { get { return Application.dataPath + "/" + fileName; } }
 
