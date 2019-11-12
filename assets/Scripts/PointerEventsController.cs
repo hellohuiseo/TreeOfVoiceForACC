@@ -422,7 +422,7 @@ public class PointerEventsController : MonoBehaviour, IPointerDownHandler, IPoin
     // pointerEventsController.onClick += (x, y) => Debug.LogFormat("clicked at {0}, {0}", x, y);
     public void Awake()
     {
-
+        Debug.Log("I am in Awake() of PointerEventsController");
     }
     public void OnScroll(PointerEventData eventData)
     {
